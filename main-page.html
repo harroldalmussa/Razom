@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Chat App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col">
+    <header class="bg-blue-500 shadow-md rounded-b-lg">
+        <nav class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="#" class="text-white text-xl font-semibold">Secure Chat</a>
+            <div class="flex space-x-4">
+                <a href="#profile" class="text-gray-200 hover:text-white transition-colors duration-300">Profile</a>
+                <a href="#login" class="text-gray-200 hover:text-white transition-colors duration-300">Login</a>
+                <a href="#history" class="text-gray-200 hover:text-white transition-colors duration-300">History</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-6 flex-grow flex items-center justify-center">
+        <div id="content" class="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+            <h1 class="text-2xl font-semibold text-gray-800 mb-4">Welcome to Secure Chat</h1>
+            <p class="text-gray-600 mb-6">Please use the navigation links above to view different sections of the app.</p>
+            <p class="text-sm text-gray-500">This is a simplified example.  A real chat app would have more interactive elements.</p>
+        </div>
+    </main>
+
+    <footer class="bg-gray-200 text-gray-600 text-center py-4 rounded-t-lg shadow-md">
+        <p>&copy; 2024 Secure Chat. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Basic routing (for demonstration purposes).  A real app would use a more robust routing library.
+        const contentDiv = document.getElementById('content');
+
+        function loadContent(page) {
+            let html = '';
+            switch (page) {
+                case 'profile':
+                    html = `
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Profile Settings</h2>
+                        <div class="mb-4">
+                            <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Name:</label>
+                            <input type="text" id="name" placeholder="Your Name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <div class="mb-4">
+                            <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                            <input type="email" id="email" placeholder="Your Email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Update Profile</button>
+                    `;
+                    break;
+                case 'login':
+                    html = `
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Login</h2>
+                        <div class="mb-4">
+                            <label for="username" class="block text-gray-700 text-sm font-bold mb-2">Username:</label>
+                            <input type="text" id="username" placeholder="Username" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <div class="mb-6">
+                            <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
+                            <input type="password" id="password" placeholder="Password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Login</button>
+                         <p class="mt-4 text-gray-600 text-sm">Don't have an account? <a href="#register" class="text-blue-500 hover:text-blue-700 font-semibold">Register</a></p>
+                    `;
+                    break;
+                case 'history':
+                    html = `
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Chat History</h2>
+                        <ul id="chat-history-list" class="space-y-2">
+                            </ul>
+                        <p class="text-gray-500 mt-4 text-sm">Loading chat history...</p>
+                    `;
+                    // Simulate loading chat history (in a real app, this would come from a server)
+                    setTimeout(() => {
+                        const historyList = document.getElementById('chat-history-list');
+                        if (historyList) { //check if historyList exists
+                            historyList.innerHTML = `
+                                <li class="bg-gray-50 p-2 rounded-md shadow-sm">User1: Hello!</li>
+                                <li class="bg-gray-50 p-2 rounded-md shadow-sm">User2: Hi there!</li>
+                                <li class="bg-gray-50 p-2 rounded-md shadow-sm">User1: How are you?</li>
+                            `;
+                        }
+                    }, 1000);
+                    break;
+                default:
+                    html = `
+                        <h1 class="text-2xl font-semibold text-gray-800 mb-4">Welcome to Secure Chat</h1>
+                        <p class="text-gray-600 mb-6">Please use the navigation links above to view different sections of the app.</p>
+                        <p class="text-sm text-gray-500">This is a simplified example.  A real chat app would have more interactive elements.</p>
+                    `;
+            }
+            contentDiv.innerHTML = html;
+
+            // Add event listener for the register link inside login page.
+            if (page === 'login') {
+                const registerLink = contentDiv.querySelector('a[href="#register"]');
+                if (registerLink) {
+                    registerLink.addEventListener('click', () => {
+                        loadContent('register'); // Load the register page
+                    });
+                }
+            }
+        }
+
+        // Handle navigation clicks
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const href = event.target.getAttribute('href').substring(1); // Remove the '#'
+                loadContent(href);
+            });
+        });
+
+        // Load the default content (welcome page)
+        loadContent('');
+    </script>
+</body>
+</html>
