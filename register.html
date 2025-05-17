@@ -144,14 +144,21 @@ registerForm.addEventListener('submit', async (event) => {
         alert('Registration successful! Please login.');
         window.location.href = 'loginpage.html';
       } else {
-        try {
+        // Handle error responses
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
           data = await response.json();
-          console.error('Registration error:', response.status, data.detail);
+          console.error('Registration error (JSON):', response.status, data.detail);
           alert(data.detail || 'Registration failed');
-        } catch (error) {
-          const errorText = await response.text();
-          console.error('Registration error (non-JSON):', response.status, errorText);
-          alert(errorText || 'Registration failed');
+        } else {
+          try {
+            const errorText = await response.text();
+            console.error('Registration error (non-JSON):', response.status, errorText);
+            alert(errorText || 'Registration failed');
+          } catch (textError) {
+            console.error('Registration error (text failed):', response.status, textError);
+            alert('Registration failed'); // Generic error
+          }
         }
       }
     } catch (error) {
