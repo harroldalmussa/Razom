@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure Chat App</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
@@ -18,7 +18,7 @@
             <a href="#" class="text-white text-xl font-semibold">Secure Chat</a>
             <div class="flex space-x-4">
                 <a href="#profile" class="text-gray-200 hover:text-white transition-colors duration-300">Profile</a>
-                <a href="#login" class="text-gray-200 hover:text-white transition-colors duration-300">Login</a>
+                <a href="loginpage.html" class="text-gray-200 hover:text-white transition-colors duration-300">Login</a>
                 <a href="#history" class="text-gray-200 hover:text-white transition-colors duration-300">History</a>
             </div>
         </nav>
@@ -57,21 +57,6 @@
                         <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Update Profile</button>
                     `;
                     break;
-                case 'login':
-                    html = `
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Login</h2>
-                        <div class="mb-4">
-                            <label for="username" class="block text-gray-700 text-sm font-bold mb-2">Username:</label>
-                            <input type="text" id="username" placeholder="Username" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                        </div>
-                        <div class="mb-6">
-                            <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
-                            <input type="password" id="password" placeholder="Password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                        </div>
-                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Login</button>
-                         <p class="mt-4 text-gray-600 text-sm">Don't have an account? <a href="#register" class="text-blue-500 hover:text-blue-700 font-semibold">Register</a></p>
-                    `;
-                    break;
                 case 'history':
                     html = `
                         <h2 class="text-xl font-semibold text-gray-800 mb-4">Chat History</h2>
@@ -82,7 +67,7 @@
                     // Simulate loading chat history (in a real app, this would come from a server)
                     setTimeout(() => {
                         const historyList = document.getElementById('chat-history-list');
-                        if (historyList) { //check if historyList exists
+                        if (historyList) { //check if historyList exists.
                             historyList.innerHTML = `
                                 <li class="bg-gray-50 p-2 rounded-md shadow-sm">User1: Hello!</li>
                                 <li class="bg-gray-50 p-2 rounded-md shadow-sm">User2: Hi there!</li>
@@ -99,16 +84,6 @@
                     `;
             }
             contentDiv.innerHTML = html;
-
-            // Add event listener for the register link inside login page.
-            if (page === 'login') {
-                const registerLink = contentDiv.querySelector('a[href="#register"]');
-                if (registerLink) {
-                    registerLink.addEventListener('click', () => {
-                        loadContent('register'); // Load the register page
-                    });
-                }
-            }
         }
 
         // Handle navigation clicks
@@ -116,7 +91,13 @@
             link.addEventListener('click', (event) => {
                 event.preventDefault();
                 const href = event.target.getAttribute('href').substring(1); // Remove the '#'
-                loadContent(href);
+                if (href === 'loginpage.html') {
+                    window.location.href = href; //  Use window.location.href for full page load
+                }
+                else{
+                    loadContent(href);
+                }
+
             });
         });
 
