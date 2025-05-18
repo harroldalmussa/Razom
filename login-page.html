@@ -74,8 +74,8 @@
 
                     if (response.ok) {
                         console.log('Login successful:', data);
-                        localStorage.setItem('access_token', data.access_token);
-                        window.location.href = '/';
+                        localStorage.setItem('access_token', data.access_token); // Store the token
+                        window.location.href = '/main-page.html';
                     } else {
                         console.error('Login error:', data);
                         alert(data.detail || 'Login failed');
