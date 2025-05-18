@@ -14,13 +14,14 @@
 </head>
 <body class="bg-gray-100 h-screen flex flex-col">
     <header class="bg-blue-500 shadow-md rounded-b-lg">
-        <nav class="container mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="#" class="text-white text-xl font-semibold">Secure Chat</a>
-            <div class="flex space-x-4">
-                <a href="#profile" class="text-gray-200 hover:text-white transition-colors duration-300">Profile</a>
-                <a href="/login" class="text-gray-200 hover:text-white transition-colors duration-300">Login</a>
-                <a href="#history" class="text-gray-200 hover:text-white transition-colors duration-300">History</a>
-            </div>
+        <nav class="fixed top-4 left-4 right-4 z-10 bg-zinc-800 bg-opacity-90 backdrop-blur-sm rounded-full px-6 py-3 flex items-center justify-between">
+            <a href="#" class="text-white text-xl font-semibold">Razom</a>
+                <div class="flex space-x-4 items-center">
+                    <a href="#profile" class="text-gray-300 hover:text-white transition-colors duration-300">Profile</a>
+                    <a href="#history" class="text-gray-300 hover:text-white transition-colors duration-300">Chat</a>
+                    <a href="#test" class="text-gray-300 hover:text-white transition-colors duration-300">Settings</a>
+                    <button id="logout-button" class="bg-[#4657CDff] hover:bg-[#3647bd] text-white font-semibold py-2 px-4 rounded-full transition-colors duration-300">Logout</button>
+                </div>
         </nav>
     </header>
 
@@ -37,8 +38,9 @@
     </footer>
 
     <script>
-        // Basic routing (for demonstration purposes). A real app would use a more robust routing library.
+        // Basic routing (for demonstration purposes). 
         const contentDiv = document.getElementById('content');
+        const logoutButton = document.getElementById('logout-button');
 
         function loadContent(page) {
             let html = '';
@@ -64,7 +66,7 @@
                             </ul>
                         <p class="text-gray-500 mt-4 text-sm">Loading chat history...</p>
                     `;
-                    // Simulate loading chat history (in a real app, this would come from a server)
+                    // Simulate loading chat history
                     setTimeout(() => {
                         const historyList = document.getElementById('chat-history-list');
                         if (historyList) { //check if historyList exists.
@@ -92,15 +94,43 @@
                 event.preventDefault();
                 const href = event.target.getAttribute('href').substring(1); // Remove the '#'
                 if (href === 'loginpage.html') {
-                    window.location.href = href; //  Use window.location.href for full page load
+                    window.location.href = href; // Use window.location.href for full page load
                 }
-                else{
+                else {
                     loadContent(href);
                 }
-
             });
         });
 
+        // Handle logout button click
+        if (logoutButton) {
+            logoutButton.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/users/logout', {
+                        method: 'POST',
+                    });
+
+                    if (response.ok) {
+                        console.log('Logout successful');
+                        localStorage.removeItem('access_token'); // Clear the token
+                        window.location.href = '/login'; // Redirect to login
+                    } else {
+                        console.error('Logout failed');
+                        alert('Logout failed');
+                    }
+                } catch (error) {
+                    console.error('Error during logout:', error);
+                    alert('An error occurred during logout');
+                }
+            });
+        }
+         if (localStorage.getItem('access_token')) {
+            console.log('User is logged in (token found).');
+            } else {
+                console.log('User is not logged in (token not found).');
+                window.location.href = '/login'; // Redirect to login if not logged in
+            }
+        // Check if the user is logged in
         // Load the default content (welcome page)
         loadContent('');
     </script>
