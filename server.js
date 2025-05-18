@@ -6,14 +6,11 @@ const path = require('path');
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-// Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// In-memory user storage (INSECURE - FOR LEARNING ONLY!)
-const users = [];
+const users = []; 
 
-// Simple (INSECURE) password hashing (FOR LEARNING ONLY!)
-function simpleHash(password) {
+function simpleHash(password) { // Simple (INSECURE) password hashing. need to build a better one
     let hash = 0;
     for (let i = 0; i < password.length; i++) {
         const char = password.charCodeAt(i);
@@ -23,7 +20,6 @@ function simpleHash(password) {
     return hash.toString(16);
 }
 
-// Routes to serve HTML pages
 app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
@@ -33,10 +29,10 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'main-page.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// API endpoints
+
 app.post('/users/', (req, res) => {
     console.log('Registration data received:', req.body);
     const { email, first_name, password } = req.body;
@@ -61,10 +57,17 @@ app.post('/users/login', (req, res) => {
     const user = users.find(u => u.email === email && u.password === hashedPassword);
 
     if (user) {
-        res.status(200).json({ message: 'Login successful!', access_token: 'dummy_token' }); // Simplified token
+        const token = simpleHash(email + hashedPassword + Date.now()); // Simple token (INSECURE!)
+        res.status(200).json({ message: 'Login successful!', access_token: token });
     } else {
         res.status(401).json({ detail: 'Invalid credentials' });
     }
+});
+
+app.post('/users/logout', (req, res) => {
+    // In a real application, you'd invalidate the token or session
+    console.log('Logout request received');
+    res.status(200).json({ message: 'Logout successful!' });
 });
 
 app.listen(port, () => {
