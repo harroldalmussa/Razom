@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Window</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  </head>
+
+<body class="m-0 font-sans bg-gray-100">
+    <div class="flex items-center justify-between bg-white px-3 py-2 border-b border-gray-200">
+        <div class="flex items-center cursor-pointer" id="profileBtn">
+            <div id="profileImg" class="w-10 h-10 rounded-full mr-3 bg-gray-300 bg-cover bg-center"></div>
+            <span id="profileName" class="font-bold text-base sm:text-lg">User Name</span>
+        </div>
+        <div class="flex items-center">
+            <button title="Voice Call" id="callBtn" class="ml-2 text-2xl bg-transparent border-none cursor-pointer">📞
+            </button>
+            <button title="Video Call" id="videoCallBtn" class="ml-2 text-2xl bg-transparent border-none cursor-pointer">
+                🎥</button>
+        </div>
+    </div>
+    <div id="chatMessages" class="px-3 py-3 h-[calc(100vh-110px)] overflow-y-auto bg-gray-50 flex flex-col">
+        </div>
+    <div class="flex items-center px-3 py-2 bg-white border-t border-gray-200">
+        <input type="text" id="messageInput" placeholder="Type a message..."
+            class="flex-1 px-3 py-2 rounded-full border border-gray-300 mr-2 outline-none" />
+        <button id="sendBtn" class="bg-blue-500 text-white rounded-full px-4 py-1.5 font-bold">Send</button>
+    </div>
+
+    <div id="profileModal"
+        class="hidden fixed z-10 left-0 top-0 w-full h-full bg-black bg-opacity-40 flex justify-center items-center">
+        <div class="bg-white p-6 rounded-lg min-w-[300px] relative">
+            <span id="closeModal" class="absolute top-3 right-4 text-2xl cursor-pointer">&times;</span>
+            <h2 id="modalProfileName" class="text-xl font-bold mb-2">User Name</h2>
+            <div id="modalProfileDetails">
+                <p>Email: user@example.com</p>
+                <p>Status: Online</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Example: Load chat data from query params (sent from chat-list.html)
+        function getQueryParams() {
+            const params = {};
+            window.location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (str, key, value) {
+                params[key] = decodeURIComponent(value);
+            });
+            return params;
+        }
+
+        // Simulate loading chat data
+        const params = getQueryParams();
+        const userName = params.user || "User Name";
+        const userImg = params.img || "";
+        const userEmail = params.email || "user@example.com";
+
+        document.getElementById('profileName').textContent = userName;
+        document.getElementById('modalProfileName').textContent = userName;
+        document.getElementById('modalProfileDetails').innerHTML = `
+            <p>Email: ${userEmail}</p>
+            <p>Status: Online</p>
+        `;
+        if (userImg) {
+            document.getElementById('profileImg').style.backgroundImage = `url('${userImg}')`;
+        }
+
+        // Modal logic
+        document.getElementById('profileBtn').onclick = function () {
+            document.getElementById('profileModal').classList.remove('hidden');
+            document.getElementById('profileModal').classList.add('flex');
+        };
+        document.getElementById('closeModal').onclick = function () {
+            document.getElementById('profileModal').classList.add('hidden');
+            document.getElementById('profileModal').classList.remove('flex');
+        };
+        window.onclick = function (event) {
+            if (event.target == document.getElementById('profileModal')) {
+                document.getElementById('profileModal').classList.add('hidden');
+                document.getElementById('profileModal').classList.remove('flex');
+            }
+        };
+
+        // Sending messages
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        function appendMessage(text, isMe = true) {
+            const msg = document.createElement('div');
+            msg.className = 'mb-3 max-w-[80%] sm:max-w-[60%] px-4 py-2 rounded-2xl ' +
+                (isMe
+                    ? 'bg-blue-500 text-white self-end'
+                    : 'bg-gray-200 self-start');
+            msg.textContent = text;
+            chatMessages.appendChild(msg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        sendBtn.onclick = function () {
+            const text = messageInput.value.trim();
+            if (text) {
+                appendMessage(text, true);
+                messageInput.value = '';
+                // Here you would send the message to your backend/server
+            }
+        };
+
+        messageInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') sendBtn.click();
+        });
+
+        // Example: Load initial messages (simulate)
+        if (params.lastMessage) {
+            appendMessage(params.lastMessage, false);
+        }
+
+        // Call and video call buttons (stub)
+        document.getElementById('callBtn').onclick = function () {
+            alert('Voice call feature coming soon!');
+        };
+        document.getElementById('videoCallBtn').onclick = function () {
+            alert('Video call feature coming soon!');
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Chat App</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="/img/razom-illustration.png" type="image/png">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Glassmorphism with Gradient */
+        #content {
+            background: rgba(255, 255, 255, 0.2);
+            /* Adjust opacity for glass effect */
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+
+            /* Gradient Background (Example - Customize these colors) */
+            background-image: linear-gradient(to bottom right, #f0f2f1, #e2e8f0);
+        }
+
+        /* You might need to adjust these if other elements are affected */
+        .container {
+            position: relative;
+            /* Needed for absolute positioning of the FAB */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 h-screen flex flex-col">
+    <header class="bg-blue-500 shadow-md rounded-b-lg">
+        <nav
+            class="fixed top-4 left-4 right-4 z-10 bg-zinc-800 bg-opacity-90 backdrop-blur-sm rounded-full px-4 md:px-6 py-3 flex items-center justify-between">
+            <a href="public\main-page.html" class="text-white text-xl font-semibold">Razom</a>
+            <div class="flex space-x-2 md:space-x-4 items-center">
+                <a href="#settings" class="text-gray-300 hover:text-white transition-colors duration-300">Settings</a>
+                <a href="#chat" class="text-gray-300 hover:text-white transition-colors duration-300">Chat</a>
+                <a href="#profile" class="text-gray-300 hover:text-white transition-colors duration-300">Account</a>
+                <button id="logout-button"
+                    class="bg-[#4657CDff] hover:bg-[#3647bd] text-white font-semibold py-2 px-4 rounded-full transition-colors duration-300">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto mt-16 px-4 py-6 flex-grow flex items-center justify-center">
+        <div id="content" class="w-full max-w-md bg-white rounded-lg shadow-lg p-6 md:p-8">
+        </div>
+    </main>
+
+    <footer class="bg-gray-200 text-gray-600 text-center py-4 rounded-t-lg shadow-md">
+        <p>&copy; 2024 Secure Chat. All rights reserved.</p>
+    </footer>
+    
+        <script>
+            // Basic routing (for demonstration purposes). 
+            const contentDiv = document.getElementById('content');
+            const logoutButton = document.getElementById('logout-button');
+    
+            function loadContent(page) {
+                let html = '';
+                switch (page) {
+                    case 'profile':
+                        const countryCodes = [
+                            { code: '+33', country: 'France' },
+                            { code: '+1', country: 'USA/Canada' },
+                            { code: '+380', country: 'Ukraine' },
+                            { code: '', country: '---------', disabled: true }, // Separator
+                            { code: '+1', country: 'USA' },
+                            { code: '+1', country: 'Canada' },
+                            { code: '+7', country: 'Russia' },
+                            { code: '+20', country: 'Egypt' },
+                            { code: '+27', country: 'South Africa' },
+                            { code: '+30', country: 'Greece' },
+                            { code: '+31', country: 'Netherlands' },
+                            { code: '+32', country: 'Belgium' },
+                            { code: '+34', country: 'Spain' },
+                            { code: '+36', country: 'Hungary' },
+                            { code: '+39', country: 'Italy' },
+                            { code: '+40', country: 'Romania' },
+                            { code: '+41', country: 'Switzerland' },
+                            { code: '+43', country: 'Austria' },
+                            { code: '+44', country: 'United Kingdom' },
+                            { code: '+45', country: 'Denmark' },
+                            { code: '+46', country: 'Sweden' },
+                            { code: '+47', country: 'Norway' },
+                            { code: '+48', country: 'Poland' },
+                            { code: '+49', country: 'Germany' },
+                            { code: '+51', country: 'Peru' },
+                            { code: '+52', country: 'Mexico' },
+                            { code: '+53', country: 'Cuba' },
+                            { code: '+54', country: 'Argentina' },
+                            { code: '+55', country: 'Brazil' },
+                            { code: '+56', country: 'Chile' },
+                            { code: '+57', country: 'Colombia' },
+                            { code: '+58', country: 'Venezuela' },
+                            { code: '+60', country: 'Malaysia' },
+                            { code: '+61', country: 'Australia' },
+                            { code: '+62', country: 'Indonesia' },
+                            { code: '+63', country: 'Philippines' },
+                            { code: '+64', country: 'New Zealand' },
+                            { code: '+65', country: 'Singapore' },
+                            { code: '+66', country: 'Thailand' },
+                            { code: '+81', country: 'Japan' },
+                            { code: '+82', country: 'South Korea' },
+                            { code: '+84', country: 'Vietnam' },
+                            { code: '+86', country: 'China' },
+                            { code: '+90', country: 'Turkey' },
+                            { code: '+92', country: 'Pakistan' },
+                            { code: '+93', country: 'Afghanistan' },
+                            { code: '+94', country: 'Sri Lanka' },
+                            { code: '+95', country: 'Myanmar' },
+                            { code: '+98', country: 'Iran' },
+                            // ... Add all country codes
+                        ];
+    
+                        let countryCodeOptions = '';
+                        countryCodes.forEach(item => {
+                            countryCodeOptions += `<option value="${item.code}" ${item.disabled ? 'disabled' : ''}>${item.code} ${item.country ? '(' + item.country + ')' : ''}</option>`;
+                        });
+    
+                        html = `
+                            <h2 class="text-xl font-semibold text-gray-800 mb-4">Profile Settings</h2>
+                            <div class="mb-4">
+                                <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Name:</label>
+                                <input type="text" id="name" placeholder="Your Name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            </div>
+                            <div class="mb-4">
+                                <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                                <input type="email" id="email" placeholder="Your Email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            </div>
+                            <div class="mb-4">
+                                <label for="phone" class="block text-gray-700 text-sm font-bold mb-2">Phone Number:</label>
+                                <div class="flex">
+                                    <select id="country-code" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mr-2">
+                                        ${countryCodeOptions}
+                                    </select>
+                                    <input type="tel" id="phone" placeholder="Your Phone Number" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                    <button id="confirm-phone" class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2">Confirm</button>
+                                </div>
+                                <p id="phone-confirmation-message" class="text-sm text-gray-500 mt-2"></p>
+                            </div>
+                            <div class="mb-4">
+                                <label for="profile-picture" class="block text-gray-700 text-sm font-bold mb-2">Profile Picture:</label>
+                                <input type="file" id="profile-picture" accept="image/*" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            </div>
+                            <div class="mb-4">
+                                <label for="bio" class="block text-gray-700 text-sm font-bold mb-2">Bio (Max 150 characters):</label>
+                                <textarea id="bio" maxlength="150" placeholder="Your Bio" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                            </div>
+                            <div class="mb-4">
+                                <label for="pronouns" class="block text-gray-700 text-sm font-bold mb-2">Pronouns:</label>
+                                <select id="pronouns" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                    <option>He/Him</option>
+                                    <option>She/Her</option>
+                                    <option>They/Them</option>
+                                    <option>Other</option>
+                                    <option>Prefer not to say</option>
+                                </select>
+                            </div>
+                            <button id="share-profile" class="bg-[#485bd3] hover:bg-[#3a4cb0] text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Share Profile</button>
+                            <div id="share-options" class="mt-4 hidden">
+                                <button id="share-url" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">Share URL</button>
+                                <button id="share-qr" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">Share QR Code</button>
+                                <button id="share-key" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Share Razom Key</button>
+                            </div>
+                            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-4">Update Profile</button>
+                        `;
+                        break;
+                    case 'chat':
+                        fetch('/chat-list.html')
+                            .then(response => response.text())
+                            .then(data => {
+                                contentDiv.innerHTML = data;
+                                // Initialize chat list animation if needed
+                                const chatListContainer = document.getElementById('chat-list-container');
+                                if (chatListContainer) {
+                                    setTimeout(() => {
+                                        chatListContainer.classList.add('active');
+                                    }, 100);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error fetching chat list:', error);
+                                contentDiv.innerHTML = '<p>Failed to load chat list.</p>';
+                            });
+                        return; // Important: Exit the function after fetching chat
+                    case 'settings':
+                        html = `<h2 class="text-xl font-semibold text-gray-800 mb-4">Settings</h2>
+                                <p>Settings content goes here.</p>`;
+                        break;
+                    default:
+                        html = `
+                            <h1 class="text-2xl font-semibold text-gray-800 mb-4">Welcome to Secure Chat</h1>
+                            <p class="text-gray-600 mb-6">Please use the navigation links above to view different sections of the app.</p>
+                            <p class="text-sm text-gray-500">This is a simplified example. A real chat app would have more interactive elements.</p>
+                        `;
+                }
+                contentDiv.innerHTML = html;
+    
+                // Add event listeners for the new elements
+                if (page === 'profile') {
+                    const confirmPhoneButton = document.getElementById('confirm-phone');
+                    const phoneConfirmationMessage = document.getElementById('phone-confirmation-message');
+                    const phoneInput = document.getElementById('phone');
+                    const countryCodeInput = document.getElementById('country-code');
+    
+                    document.getElementById('share-profile').addEventListener('click', () => {
+                        document.getElementById('share-options').classList.toggle('hidden');
+                    });
+    
+                    document.getElementById('share-url').addEventListener('click', () => {
+                        // Logic to share profile URL
+                        alert('Sharing profile URL');
+                    });
+    
+                    document.getElementById('share-qr').addEventListener('click', () => {
+                        // Logic to generate and share QR code
+                        alert('Sharing QR Code');
+                    });
+    
+                    document.getElementById('share-key').addEventListener('click', () => {
+                        // Logic to share Razom key
+                        alert('Sharing Razom Key');
+                    });
+    
+                    confirmPhoneButton.addEventListener('click', () => {
+                        const phoneNumber = phoneInput.value;
+                        const countryCode = countryCodeInput.value;
+    
+                        // Disable the button and change the text
+                        confirmPhoneButton.disabled = true;
+                        confirmPhoneButton.textContent = 'Sending...';
+                        phoneConfirmationMessage.textContent = 'Sending verification code...';
+    
+                        // Send the verification request to the server
+                        fetch('/verify/send-code', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + localStorage.getItem('access_token') // Assuming you're using JWT
+                            },
+                            body: JSON.stringify({ phoneNumber: phoneNumber, countryCode: countryCode })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                phoneConfirmationMessage.textContent = 'Verification code sent to ' + countryCode + ' ' + phoneNumber + '! Please enter the code below.';
+                                // Show a code input field
+                                const codeInputField = document.createElement('input');
+                                codeInputField.type = 'text';
+                                codeInputField.id = 'verification-code';
+                                codeInputField.placeholder = 'Verification Code';
+                                codeInputField.classList.add('shadow', 'appearance-none', 'border', 'rounded', 'w-full', 'py-2', 'px-3', 'text-gray-700', 'leading-tight', 'focus:outline-none', 'focus:shadow-outline', 'mt-2');
+                                confirmPhoneButton.parentNode.insertBefore(codeInputField, confirmPhoneButton.nextSibling);
+    
+                                // Change the button to "Verify Code"
+                                confirmPhoneButton.textContent = 'Verify Code';
+                                confirmPhoneButton.disabled = false;
+                                confirmPhoneButton.removeEventListener('click', arguments.callee); // Remove the existing listener
+                                confirmPhoneButton.addEventListener('click', verifyCode); // Add the verifyCode listener (defined below)
+                            } else {
+                                phoneConfirmationMessage.textContent = 'Failed to send verification code. ' + (data.error || 'Please try again.');
+                                confirmPhoneButton.disabled = false;
+                                confirmPhoneButton.textContent = 'Confirm';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            phoneConfirmationMessage.textContent = 'An error occurred. Please try again.';
+                            confirmPhoneButton.disabled = false;
+                            confirmPhoneButton.textContent = 'Confirm';
+                        });
+                    });
+                }
+            }
+    
+            // Handle navigation clicks
+            document.querySelectorAll('nav a').forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const href = event.target.getAttribute('href').substring(1);
+                if (href === 'loginpage.html') {
+                    window.location.href = href;
+                } else if (href === 'chat') 
+                    {
+                    loadContent('chat');
+                } else {
+                    loadContent(href);
+                }
+                });
+            });
+    
+            // Handle logout button click
+            if (logoutButton) {
+                logoutButton.addEventListener('click', async () => {
+                    try {
+                        const response = await fetch('/users/logout', {
+                            method: 'POST',
+                        });
+    
+                        if (response.ok) {
+                            console.log('Logout successful');
+                            localStorage.removeItem('access_token'); // Clear the token
+                            window.location.href = '/login'; // Redirect to login
+                        } else {
+                            console.error('Logout failed');
+                            alert('Logout failed');
+                        }
+                    } catch (error) {
+                        console.error('Error during logout:', error);
+                        alert('An error occurred during logout');
+                    }
+                });
+            }
+            if (localStorage.getItem('access_token')) {
+                console.log('User is logged in (token found).');
+            } else {
+                console.log('User is not logged in (token not found).');
+                window.location.href = '/login'; // Redirect to login if not logged in
+            }
+            // Check if the user is logged in
+            // Load the default content (welcome page)
+            loadContent('');
+    
+            function verifyCode() {
+                const phoneNumber = phoneInput.value;
+                const countryCode = countryCodeInput.value;
+                const code = document.getElementById('verification-code').value;
+    
+                fetch('/verify/check-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    },
+                    body: JSON.stringify({ phoneNumber: phoneNumber, countryCode: countryCode, code: code })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        phoneConfirmationMessage.textContent = 'Phone number verified successfully!';
+                        // Optionally, disable the phone input and confirm button, or show a success message
+                        phoneInput.disabled = true;
+                        confirmPhoneButton.disabled = true;
+                    } else {
+                        phoneConfirmationMessage.textContent = 'Invalid verification code. Please try again.';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    phoneConfirmationMessage.textContent = 'An error occurred during verification.';
+                });
+            }
+        </script>
+    </body>
+    
+    </html>
