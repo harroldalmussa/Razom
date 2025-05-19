@@ -9,6 +9,12 @@
 
 <body class="m-0 font-sans bg-gray-100">
     <div class="flex items-center justify-between bg-white px-3 py-2 border-b border-gray-200">
+        <button id="backToChatList" class="mr-4 text-gray-600 hover:text-gray-800">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12m0 0l7.5-7.5M8.25 12h13.5" />
+            </svg>
+        </button>
+
         <div class="flex items-center cursor-pointer" id="profileBtn">
             <div id="profileImg" class="w-10 h-10 rounded-full mr-3 bg-gray-300 bg-cover bg-center"></div>
             <span id="profileName" class="font-bold text-base sm:text-lg">User Name</span>
@@ -115,6 +121,21 @@
         if (params.lastMessage) {
             appendMessage(params.lastMessage, false);
         }
+
+        // Back to Chat List Buttn 
+         const backButton = document.getElementById('backToChatList'); 
+
+        if (backButton) { 
+            backButton.addEventListener('click', () => { 
+            if (window.history.length > 1) { 
+                window.history.back();
+            } else {
+                window.location.href = '/chat'; 
+            }
+        });
+    } else {
+        console.error("Error: Back button not found! Check the HTML.");
+    }
 
         // Call and video call buttons (stub)
         document.getElementById('callBtn').onclick = function () {

@@ -30,6 +30,27 @@
         .user-link:hover {
             background-color: #f3f4f6;
         }
+        /* Modal Styles (Add these to your <style> section)  */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
     </style>
 </head>
 
@@ -60,7 +81,7 @@
         <div class="flex justify-between mb-4 bg-gray-100 rounded-lg p-2">
             <button class="flex-1 rounded-md py-2 px-4 font-semibold text-sm text-white bg-indigo-500">All Chats</button>
             <button class="flex-1 rounded-md py-2 px-4 font-semibold text-sm text-gray-600 hover:bg-gray-200">Groups</button>
-            <button class="flex-1 rounded-md py-2 px-4 font-semibold text-sm text-gray-600 hover:bg-gray-200">Contacts</button>
+            <button id="openContactsModal" class="flex-1 rounded-md py-2 px-4 font-semibold text-sm text-gray-600 hover:bg-gray-200">Contacts</button>
         </div>
 
         <div class="space-y-4">
@@ -190,6 +211,29 @@
         </button>
     </div>
 
+    <div id="contactsModal" class="modal hidden">
+        <div class="modal-content">
+            <span id="closeContactsModal" class="absolute top-2 right-2 text-2xl cursor-pointer">&times;</span>
+            <h2 class="text-xl font-semibold mb-4">Contacts</h2>
+            <form id="addContactForm" class="mb-4">
+                <input type="text" id="newContactName" placeholder="Name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-2">
+                <input type="email" id="newContactEmail" placeholder="Email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-2">
+                <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Add Contact</button>
+            </form>
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th class="text-left">Name</th>
+                        <th class="text-left">Email</th>
+                        <th class="text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="contactsTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
     <script>
         // Add active class with a delay to trigger the animation
         document.addEventListener('DOMContentLoaded', () => {
@@ -197,6 +241,83 @@
             setTimeout(() => {
                 chatListContainer.classList.add('active');
             }, 100); // Small delay to ensure the element is rendered
+        });
+
+        // Modal JavaScript
+        const openContactsModalButton = document.getElementById('openContactsModal');
+        const contactsModal = document.getElementById('contactsModal');
+        const closeContactsModalButton = document.getElementById('closeContactsModal');
+        const contactsTableBody = document.getElementById('contactsTableBody');
+        const addContactForm = document.getElementById('addContactForm');
+        const newContactNameInput = document.getElementById('newContactName');
+        const newContactEmailInput = document.getElementById('newContactEmail');
+
+        // Show modal
+        openContactsModalButton.addEventListener('click', () => {
+            contactsModal.style.display = 'flex';
+            loadContacts();
+        });
+
+        // Hide modal
+        closeContactsModalButton.addEventListener('click', () => {
+            contactsModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === contactsModal) {
+                contactsModal.style.display = 'none';
+            }
+        });
+
+        // --- Functions ---
+        async function loadContacts() {
+            contactsTableBody.innerHTML = ''; // Clear table
+
+            // ** Replace this with actual fetching from your data source **
+            const contacts = [
+                { name: 'Alice', email: 'alice@example.com' },
+                { name: 'Bob', email: 'bob@example.com' },
+            ];
+
+            contacts.forEach(contact => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${contact.name}</td>
+                    <td>${contact.email}</td>
+                    <td><button class='startMessageBtn' data-name='${contact.name}' data-email='${contact.email}'>Message</button></td>
+                `;
+                contactsTableBody.appendChild(row);
+            });
+
+            // "Message" button event listeners
+            document.querySelectorAll('.startMessageBtn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const name = button.dataset.name;
+                    const email = button.dataset.email;
+                    window.location.href = `chat-window.html?user=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`;
+                });
+            });
+        }
+
+        addContactForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = newContactNameInput.value;
+            const email = newContactEmailInput.value;
+
+            // ** Send to server to save contact **
+
+            // Placeholder: Add to table directly
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td>${name}</td>
+                <td>${email}</td>
+                <td><button class='startMessageBtn' data-name='${name}' data-email='${email}'>Message</button></td>
+            `;
+            contactsTableBody.appendChild(newRow);
+
+            newContactNameInput.value = '';
+            newContactEmailInput.value = '';
+            newContactEmailInput.value = '';
         });
     </script>
 </body>
