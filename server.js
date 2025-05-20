@@ -1,4 +1,5 @@
 // server.js (Backend) - FULL UPDATED CODE
+const momentsTable = 'moments'; // New table name for moments
 require('dotenv').config();
 
 const express = require('express');
@@ -15,8 +16,10 @@ const jwt = require('jsonwebtoken');
 const secretKey = process.env.JWT_SECRET_KEY;
 const { body, validationResult } = require('express-validator');
 
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
+// IMPORTANT: Increase payload limits for JSON and URL-encoded bodies
+app.use(express.json({ limit: '10mb' })); // Allows up to 10MB JSON body
+app.use(express.urlencoded({ limit: '10mb', extended: true })); // For URL-encoded bodies (if you use it)
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Database Connection Pool
@@ -381,4 +384,85 @@ app.post('/verify/check-code', authenticateToken, async (req, res) => {
 
 app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
+});
+
+// Upload a new moment (image or video as Base64)
+app.post('/moments', authenticateToken, async (req, res) => {
+    const { src: imageData, type: fileType, note } = req.body; // 'src' from frontend will be Base64
+    const userId = req.user.userId;
+
+    if (!imageData || !fileType) {
+        return res.status(400).json({ error: 'Image data and file type are required.' });
+    }
+
+    // Optional: Basic validation for file size (check if Base64 string is too long)
+    // A rough estimate: 1MB of binary data ~ 1.37MB as Base64
+    const maxBase64Length = 10 * 1024 * 1024 * 1.4; // Roughly 10MB original file size limit
+    if (imageData.length > maxBase64Length) {
+        return res.status(413).json({ error: `Payload too large. Max moment size is around ${Math.round(maxBase64Length / (1024 * 1024))}MB.` });
+    }
+
+
+    try {
+        const client = await pool.connect();
+        try {
+            const result = await client.query(
+                `INSERT INTO ${momentsTable} (user_id, image_data, file_type, note) VALUES ($1, $2, $3, $4) RETURNING id, image_data AS src, file_type AS type, note, timestamp`,
+                [userId, imageData, fileType, note || null]
+            );
+            res.status(201).json({ success: true, message: 'Moment uploaded successfully', moment: result.rows[0] });
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('Upload Moment Error:', error);
+        res.status(500).json({ error: 'Failed to upload moment' });
+    }
+});
+
+// Get all moments for the authenticated user
+app.get('/moments/my', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+
+    try {
+        const client = await pool.connect();
+        try {
+            const result = await client.query(
+                `SELECT id, image_data AS src, file_type AS type, note, timestamp FROM ${momentsTable} WHERE user_id = $1 ORDER BY timestamp DESC`,
+                [userId]
+            );
+            res.json({ success: true, moments: result.rows });
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('Get Moments Error:', error);
+        res.status(500).json({ error: 'Failed to retrieve moments' });
+    }
+});
+
+// Delete a specific moment
+app.delete('/moments/:id', authenticateToken, async (req, res) => {
+    const momentId = req.params.id;
+    const userId = req.user.userId;
+
+    try {
+        const client = await pool.connect();
+        try {
+            const result = await client.query(
+                `DELETE FROM ${momentsTable} WHERE id = $1 AND user_id = $2 RETURNING id`,
+                [momentId, userId]
+            );
+            if (result.rows.length > 0) {
+                res.json({ success: true, message: 'Moment deleted successfully', momentId: result.rows[0].id });
+            } else {
+                res.status(404).json({ error: 'Moment not found or unauthorized' });
+            }
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('Delete Moment Error:', error);
+        res.status(500).json({ error: 'Failed to delete moment' });
+    }
 });

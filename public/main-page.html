@@ -300,6 +300,88 @@
             width: 90%;
             max-width: 500px;
         }
+
+        /* Custom aspect ratio styles for 9:16 */
+        .aspect-w-9 {
+            position: relative;
+            width: 100%;
+        }
+
+        .aspect-w-9::before {
+            content: '';
+            display: block;
+            padding-bottom: calc(100% / (9 / 16));
+            /* 9:16 aspect ratio */
+        }
+
+        .aspect-w-9> :first-child {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* Styles for the new image editor modal */
+        #image-editor-modal .modal-content {
+            max-width: 700px;
+            /* Wider for editor */
+        }
+
+        #image-preview-canvas {
+            border: 1px solid #ccc;
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto 1rem;
+        }
+
+        .slider-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .slider-group label {
+            flex: 0 0 80px;
+            margin-right: 10px;
+            font-weight: 600;
+        }
+
+        .slider-group input[type="range"] {
+            flex-grow: 1;
+        }
+
+        #expanded-media-modal .modal-content {
+            max-width: 90vw;
+            /* Adjust as needed for larger view */
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            /* Allow note below media */
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            /* Smaller padding for media */
+        }
+
+        #expanded-media-modal .modal-content img,
+        #expanded-media-modal .modal-content video {
+            max-width: 100%;
+            max-height: 80vh;
+            /* Leave room for close button/note */
+            object-fit: contain;
+        }
+
+        #expanded-media-note {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #333;
+            text-align: center;
+            max-height: 100px;
+            overflow-y: auto;
+            word-wrap: break-word;
+        }
     </style>
 </head>
 
@@ -316,10 +398,11 @@
             class="fixed top-4 left-4 right-4 z-10 bg-zinc-800 bg-opacity-90 backdrop-blur-sm rounded-full px-4 md:px-6 py-3 flex items-center justify-between">
             <button id="razom-toggle-button">Razom</button>
             <div id="nav-links" class="flex space-x-2 md:space-x-4 items-center">
+                <a href="#home" class="text-gray-300 hover:text-white transition-colors duration-300">Home</a>
                 <a href="#chat" class="text-gray-300 hover:text-white transition-colors duration-300">Chat</a>
                 <a href="#profile" class="text-gray-300 hover:text-white transition-colors duration-300">Account</a>
                 <button id="logout-button"
-                    class="bg-[#4657CDff] hover:bg-[#3647bd] text-white font-semibold py-2 px-4 rounded-full transition-colors duration-300">Logout</button>
+                    class="bg-[#3B82F6] hover:bg-[#2f68c4] text-white font-semibold py-2 px-4 rounded-full transition-colors duration-300">Logout</button>
             </div>
         </nav>
     </header>
@@ -366,6 +449,48 @@
                 class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2">
                 Cancel
             </button>
+        </div>
+    </div>
+
+    <div id="image-editor-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Edit Moment</h3>
+            <canvas id="image-preview-canvas"></canvas>
+            <div class="slider-group">
+                <label for="brightness-slider">Brightness:</label>
+                <input type="range" id="brightness-slider" min="0" max="200" value="100">
+                <span id="brightness-value">100%</span>
+            </div>
+            <div class="slider-group">
+                <label for="saturation-slider">Saturation:</label>
+                <input type="range" id="saturation-slider" min="0" max="200" value="100">
+                <span id="saturation-value">100%</span>
+            </div>
+            <div class="mb-4">
+                <label for="moment-note" class="block text-gray-700 text-sm font-bold mb-2">Note (optional):</label>
+                <textarea id="moment-note" class="w-full p-2 border border-gray-300 rounded mb-2 resize-y"
+                    placeholder="Add a note about this moment..." maxlength="200"></textarea>
+                <div id="moment-note-char-count" class="text-sm text-gray-500 text-right">0 / 200</div>
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button id="cancel-image-edit"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Cancel
+                </button>
+                <button id="apply-image-edits"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Apply Edits & Upload
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="expanded-media-modal" class="modal hidden">
+        <div class="modal-content">
+            <button id="close-expanded-media" class="absolute top-2 right-2 text-white text-2xl font-bold bg-black bg-opacity-50 rounded-full w-8 h-8 flex items-center justify-center">&times;</button>
+            <div id="expanded-media-content" class="w-full h-full flex items-center justify-center">
+                </div>
+            <p id="expanded-media-note" class="hidden"></p>
         </div>
     </div>
 
@@ -431,6 +556,34 @@
             }
         }
 
+        // Function to render a single post HTML
+        function renderPostHtml(post, authorName, authorAvatar) {
+            return `
+                <div class="timeline-post bg-white shadow-md rounded-xl p-4 mb-4" data-post-id="${post.id}">
+                    <div class="post-header flex items-center justify-between mb-2">
+                        <div class="user-info flex items-center">
+                            <img src="${authorAvatar}" alt="User Avatar"
+                                class="rounded-full h-8 w-8 mr-2">
+                            <span class="font-semibold">${authorName}</span>
+                        </div>
+                        ${post.isCurrentUserPost ? `
+                        <div class="post-actions flex space-x-2">
+                            <button class="edit-post-button text-blue-500 hover:text-blue-700 text-sm">Edit</button>
+                            <button class="delete-post-button text-red-500 hover:text-red-700 text-sm">Delete</button>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="post-content">
+                        <p class="text-gray-700 mb-2">${post.content}</p>
+                        ${post.image ? `<img src="${post.image}" alt="Post Image" class="rounded-lg mb-2 max-w-full">` : ''}
+                        ${post.feeling && post.feeling !== '' ? `<p class="text-sm text-gray-600">Feeling: ${post.feeling}</p>` : ''}
+                    </div>
+                    <div class="post-footer text-gray-500 text-sm">
+                        Posted on: ${new Date(post.timestamp).toLocaleDateString()}
+                    </div>
+                </div>
+            `;
+        }
 
         function loadContent(page) {
             let html = '';
@@ -439,9 +592,19 @@
             const userName = userData.name || 'Guest User';
             const userBio = userData.bio || 'No bio yet.';
             const userProfilePicture = userData.profilePicture || '/img/razom-logo.png';
-
+            const currentUserId = userData.id; // Assuming user_data contains an 'id'
 
             switch (page) {
+                case 'home':
+                    html = `
+                        <h1 class="text-2xl font-semibold text-gray-800 mb-4">Discover Posts</h1>
+                        <div id="global-posts-list" class="timeline-posts">
+                            <p class="text-gray-500 text-center mt-4">Loading posts...</p>
+                        </div>
+                    `;
+                    contentDiv.innerHTML = html;
+                    fetchGlobalPosts();
+                    break;
                 case 'profile':
                     const countryCodes = [
                         { code: '+33', country: 'France' },
@@ -512,7 +675,7 @@
                                 <h2 class="text-xl font-semibold text-gray-800 mb-2" id="profile-name-display">${userName}</h2>
                                 <div class="profile-stats flex space-x-4 justify-center">
                                     <div><span class="font-bold" id="posts-count">0</span> Posts</div>  <div><span class="font-bold">5</span> Connections</div>
-                                    <div><span class="font-bold" id="photos-count">0</span> Photos</div>   </div>
+                                    <div><span class="font-bold" id="photos-count">0</span> Moments</div>   </div>
                                 <div class="profile-details mt-2">                   <p class="text-gray-700">Bio: <span id="profile-bio-display">${userBio}</span></p>
                                 </div>
                             </div>
@@ -521,7 +684,7 @@
                                 class="edit-profile-button bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
                                 Edit Profile</button>
                             <button id="share-profile"
-                                class="bg-[#485bd3] hover:bg-[#3a4cb0] text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                                class="bg-[#3B82F6] hover:bg-[#2f68c4] text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                                 Share Profile</button>
                         </div>
 
@@ -582,8 +745,7 @@
                         <div class="timeline-container mt-8">
                             <div class="flex justify-center border-b border-gray-300">
                                 <button class="tab active">Posts</button>
-                                <button class="tab">Photos</button>
-                                <button class="tab">Highlights</button>
+                                <button class="tab">Moments</button> <button class="tab">Highlights</button>
                             </div>
                             <div id="timeline-content" class="timeline-posts mt-4">
                             </div>
@@ -592,10 +754,24 @@
                     `;
                     break;
                 case 'chat':
-                    fetch('/chat-list.html')
-                        .then(response => response.text())
+                    // --- MODIFIED FETCH PATH AND SCRIPT RE-EXECUTION ---
+                    fetch('chat-list.html')
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok ' + response.statusText);
+                            }
+                            return response.text();
+                        })
                         .then(data => {
                             contentDiv.innerHTML = data;
+                            // Manually re-execute scripts from the fetched HTML
+                            const scripts = contentDiv.querySelectorAll('script');
+                            scripts.forEach(script => {
+                                const newScript = document.createElement('script');
+                                newScript.textContent = script.textContent;
+                                document.head.appendChild(newScript).remove();
+                            });
+
                             const chatListContainer = document.getElementById('chat-list-container');
                             if (chatListContainer) {
                                 setTimeout(() => {
@@ -605,22 +781,26 @@
                         })
                         .catch(error => {
                             console.error('Error fetching chat list:', error);
-                            contentDiv.innerHTML = '<p>Failed to load chat list.</p>';
+                            contentDiv.innerHTML = '<p>Failed to load chat list. Please ensure chat-list.html is in the correct directory.</p>';
                         });
                     return;
                 default:
+                    // Default to Home page if no specific hash is provided
                     html = `
-                        <h1 class="text-2xl font-semibold text-gray-800 mb-4">Welcome to Secure Chat</h1>
-                        <p class="text-gray-600 mb-6">Please use the navigation links above to view different sections of the app.</p>
-                        <p class="text-sm text-gray-500">This is a simplified example. A real chat app would have more interactive elements.</p>
+                        <h1 class="text-2xl font-semibold text-gray-800 mb-4">Discover Posts</h1>
+                        <div id="global-posts-list" class="timeline-posts">
+                            <p class="text-gray-500 text-center mt-4">Loading posts...</p>
+                        </div>
                     `;
+                    contentDiv.innerHTML = html;
+                    fetchGlobalPosts();
+                    return;
             }
             contentDiv.innerHTML = html;
 
             if (page === 'profile') {
-                updateProfileCounts(); // Update counts when profile page loads
+                updateProfileCounts();
 
-                // Event listener for the "Edit Profile" button
                 const toggleEditProfileButton = document.getElementById('toggle-edit-profile');
                 const editProfileForm = document.getElementById('edit-profile-form');
                 if (toggleEditProfileButton && editProfileForm) {
@@ -629,8 +809,6 @@
                     });
                 }
 
-
-                // Event listener for "Share Profile" button
                 const shareProfileButton = document.getElementById('share-profile');
                 if (shareProfileButton) {
                     shareProfileButton.addEventListener('click', () => {
@@ -638,13 +816,11 @@
                     });
                 }
 
-                // Phone number confirmation (Twilio)
                 const confirmPhoneButton = document.getElementById('confirm-phone');
                 const phoneConfirmationMessage = document.getElementById('phone-confirmation-message');
                 const phoneInput = document.getElementById('phone');
                 const countryCodeInput = document.getElementById('country-code');
 
-                // Declare verifyCode function in a scope where it's accessible
                 function verifyCode() {
                     const code = document.getElementById('verification-code').value;
                     const phoneNumber = phoneInput.value;
@@ -676,7 +852,6 @@
                             phoneConfirmationMessage.textContent = 'An error occurred. Please try again.';
                         });
                 }
-
 
                 if (confirmPhoneButton) {
                     confirmPhoneButton.addEventListener('click', () => {
@@ -725,8 +900,6 @@
                     });
                 }
 
-
-                // Get references to the dynamic elements for profile update
                 const profileNameDisplay = document.getElementById('profile-name-display');
                 const profileBioDisplay = document.getElementById('profile-bio-display');
                 const profilePicDisplay = document.getElementById('profile-pic-display');
@@ -737,18 +910,13 @@
                 const updateProfileButton = document.getElementById('update-profile-button');
                 const pronounsSelect = document.getElementById('pronouns');
 
-
-                // Populate edit fields with current data from userData
-                if (editNameInput) editNameInput.value = userName; // Use userName from outer scope
+                if (editNameInput) editNameInput.value = userName;
                 if (editEmailInput) editEmailInput.value = userData.email || '';
-                if (editBioTextarea) editBioTextarea.value = userBio; // Use userBio from outer scope
-                // You'd need to add logic here to set the selected option for pronouns if stored in userData
-                // For example: if (userData.pronouns) pronounsSelect.value = userData.pronouns;
+                if (editBioTextarea) editBioTextarea.value = userBio;
 
-                // Add event listener for Update Profile button
                 if (updateProfileButton) {
                     updateProfileButton.addEventListener('click', async () => {
-                        const current_userData_for_update = JSON.parse(localStorage.getItem('user_data') || '{}'); // Re-retrieve for freshest data
+                        const current_userData_for_update = JSON.parse(localStorage.getItem('user_data') || '{}');
 
                         const newName = editNameInput.value.trim();
                         const newEmail = editEmailInput.value.trim();
@@ -764,6 +932,12 @@
                         let updatedProfilePicture = current_userData_for_update.profilePicture;
 
                         if (newProfilePictureFile) {
+                            const MAX_PROFILE_IMAGE_SIZE_MB = 2;
+                            if (newProfilePictureFile.size > MAX_PROFILE_IMAGE_SIZE_MB * 1024 * 1024) {
+                                alert(`Profile picture file size exceeds the limit of ${MAX_PROFILE_IMAGE_SIZE_MB} MB.`);
+                                return;
+                            }
+
                             updatedProfilePicture = await new Promise((resolve) => {
                                 const reader = new FileReader();
                                 reader.onload = function (e) {
@@ -791,22 +965,30 @@
                                 body: JSON.stringify(dataToSend)
                             });
 
+                            if (!response.ok) {
+                                let errorMessage = 'Failed to update profile.';
+                                try {
+                                    const errorResult = await response.json();
+                                    errorMessage = errorResult.error || errorMessage;
+                                } catch (e) {
+                                    errorMessage = await response.text();
+                                    console.error('Server response was not JSON:', errorMessage);
+                                }
+                                alert('Failed to update profile: ' + errorMessage);
+                                return;
+                            }
+
                             const result = await response.json();
 
-                            if (response.ok) {
-                                console.log('Backend update successful:', result);
-                                localStorage.setItem('user_data', JSON.stringify(result.user));
+                            console.log('Backend update successful:', result);
+                            localStorage.setItem('user_data', JSON.stringify(result.user));
 
-                                if (profileNameDisplay) profileNameDisplay.textContent = result.user.name;
-                                if (profileBioDisplay) profileBioDisplay.textContent = result.user.bio;
-                                if (profilePicDisplay) profilePicDisplay.src = result.user.profilePicture;
+                            if (profileNameDisplay) profileNameDisplay.textContent = result.user.name;
+                            if (profileBioDisplay) profileBioDisplay.textContent = result.user.bio;
+                            if (profilePicDisplay) profilePicDisplay.src = result.user.profilePicture;
 
-                                editProfileForm.classList.add('hidden');
-                                alert('Profile updated successfully!');
-                            } else {
-                                console.error('Backend update failed:', result);
-                                alert('Failed to update profile: ' + (result.error || 'Unknown error'));
-                            }
+                            editProfileForm.classList.add('hidden');
+                            alert('Profile updated successfully!');
                         } catch (error) {
                             console.error('Error during profile update:', error);
                             alert('An error occurred during profile update.');
@@ -814,43 +996,10 @@
                     });
                 }
 
-
                 const tabButtons = document.querySelectorAll('.tab');
                 const timelineContent = document.getElementById('timeline-content');
 
-                // Function to render a single post HTML
-                function renderPostHtml(post) {
-                    const postAuthorName = JSON.parse(localStorage.getItem('user_data') || '{}').name || 'Anonymous';
-                    const postAuthorAvatar = JSON.parse(localStorage.getItem('user_data') || '{}').profilePicture || '/img/razom-logo.png';
-
-                    // Ensure post.id is correctly used for data-post-id
-                    return `
-                        <div class="timeline-post bg-white shadow-md rounded-xl p-4 mb-4" data-post-id="${post.id}">
-                            <div class="post-header flex items-center justify-between mb-2">
-                                <div class="user-info flex items-center">
-                                    <img src="${postAuthorAvatar}" alt="User Avatar"
-                                        class="rounded-full h-8 w-8 mr-2">
-                                    <span class="font-semibold">${postAuthorName}</span>
-                                </div>
-                                <div class="post-actions flex space-x-2">
-                                    <button class="edit-post-button text-blue-500 hover:text-blue-700 text-sm">Edit</button>
-                                    <button class="delete-post-button text-red-500 hover:text-red-700 text-sm">Delete</button>
-                                </div>
-                            </div>
-                            <div class="post-content">
-                                <p class="text-gray-700 mb-2">${post.content}</p>
-                                ${post.image ? `<img src="${post.image}" alt="Post Image" class="rounded-lg mb-2 max-w-full">` : ''}
-                                ${post.feeling && post.feeling !== '' ? `<p class="text-sm text-gray-600">Feeling: ${post.feeling}</p>` : ''}
-                            </div>
-                            <div class="post-footer text-gray-500 text-sm">
-                                Posted on: ${new Date(post.timestamp).toLocaleDateString()}
-                            </div>
-                        </div>
-                    `;
-                }
-
-                // Helper function to render posts content
-                async function renderPostsContent() { // Made async to await fetch
+                async function renderPostsContent() {
                     if (!timelineContent) return;
 
                     timelineContent.innerHTML = `
@@ -900,6 +1049,9 @@
                     const cancelPostButton = document.getElementById('cancel-post');
                     const postsListDiv = document.getElementById('posts-list');
                     const postFeelingSelect = document.getElementById('post-feeling');
+                    const postImageInput = document.getElementById('post-image');
+
+                    const MAX_IMAGE_SIZE_MB = 5;
 
                     if (newPostButton) {
                         newPostButton.addEventListener('click', () => {
@@ -915,7 +1067,7 @@
                             postTextArea.value = '';
                             postFeelingSelect.value = '';
                             charCount.textContent = '0 / 500';
-                            document.getElementById('post-image').value = '';
+                            postImageInput.value = '';
                         });
                     }
 
@@ -926,86 +1078,95 @@
                         });
                     }
 
-                    // --- Post Creation Logic (Sends to Backend) ---
                     if (submitPostButton) {
-                        submitPostButton.addEventListener('click', async () => { // Make async
+                        submitPostButton.addEventListener('click', async () => {
                             const postContent = postTextArea.value.trim();
                             const postFeeling = postFeelingSelect.value;
-                            const postImageInput = document.getElementById('post-image');
                             const postImageFile = postImageInput.files[0];
 
-                            if (postContent.length >= 10 && postContent.length <= 500) {
-                                let imageUrl = '';
-                                if (postImageFile) {
-                                    imageUrl = await new Promise((resolve) => {
-                                        const reader = new FileReader();
-                                        reader.onload = function (e) { resolve(e.target.result); };
-                                        reader.readAsDataURL(postImageFile);
-                                    });
-                                }
-
-                                try {
-                                    const response = await fetch('/posts', { // New POST endpoint
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-                                        },
-                                        body: JSON.stringify({
-                                            content: postContent,
-                                            image: imageUrl,
-                                            feeling: postFeeling
-                                        })
-                                    });
-
-                                    const result = await response.json();
-
-                                    if (response.ok) {
-                                        console.log('Post created successfully:', result.post);
-                                        // The backend now returns the full post object including ID and timestamp
-                                        const newPost = result.post;
-                                        // Update localStorage with the new post (optional, but good for immediate display without re-fetching all)
-                                        let posts = JSON.parse(localStorage.getItem('user_posts') || '[]');
-                                        posts.unshift(newPost);
-                                        localStorage.setItem('user_posts', JSON.stringify(posts));
-
-                                        const newPostElement = document.createElement('div');
-                                        newPostElement.innerHTML = renderPostHtml(newPost);
-                                        if (postsListDiv) postsListDiv.prepend(newPostElement.firstElementChild);
-
-                                        const createdPostElement = newPostElement.firstElementChild;
-                                        if (createdPostElement) {
-                                            const editBtn = createdPostElement.querySelector('.edit-post-button');
-                                            const deleteBtn = createdPostElement.querySelector('.delete-post-button');
-                                            if (editBtn) editBtn.addEventListener('click', () => editPost(createdPostElement.dataset.postId));
-                                            if (deleteBtn) deleteBtn.addEventListener('click', () => deletePost(createdPostElement.dataset.postId));
-                                        }
-
-                                        newPostForm.classList.add('hidden');
-                                        newPostButton.classList.remove('hidden');
-                                        postTextArea.value = '';
-                                        postFeelingSelect.value = '';
-                                        charCount.textContent = '0 / 500';
-                                        postImageInput.value = '';
-                                        updateProfileCounts(); // Update posts count
-                                    } else {
-                                        console.error('Failed to create post:', result);
-                                        alert('Failed to create post: ' + (result.error || 'Unknown error'));
-                                    }
-                                } catch (error) {
-                                    console.error('Error creating post:', error);
-                                    alert('An error occurred while creating the post.');
-                                }
-
-                            } else {
+                            if (postContent.length < 10 || postContent.length > 500) {
                                 alert('Post must be between 10 and 500 characters.');
+                                return;
                             }
+
+                            let imageUrl = '';
+                            if (postImageFile) {
+                                if (postImageFile.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+                                    alert(`Image file size exceeds the limit of ${MAX_IMAGE_SIZE_MB} MB. Please choose a smaller image.`);
+                                    return;
+                                }
+                                imageUrl = await new Promise((resolve) => {
+                                    const reader = new FileReader();
+                                    reader.onload = function (e) { resolve(e.target.result); };
+                                    reader.readAsDataURL(postImageFile);
+                                });
+                            }
+
+                            try {
+                                const response = await fetch('/posts', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                                    },
+                                    body: JSON.stringify({
+                                        content: postContent,
+                                        image: imageUrl,
+                                        feeling: postFeeling
+                                    })
+                                });
+
+                                if (!response.ok) {
+                                    let errorMessage = 'Failed to create post.';
+                                    try {
+                                        const errorResult = await response.json();
+                                        errorMessage = errorResult.error || errorMessage;
+                                    } catch (e) {
+                                        errorMessage = await response.text();
+                                        console.error('Server response was not JSON:', errorMessage);
+                                    }
+                                    alert('Failed to create post: ' + errorMessage);
+                                    return;
+                                }
+
+                                const result = await response.json();
+
+                                console.log('Post created successfully:', result.post);
+                                const newPost = result.post;
+                                let posts = JSON.parse(localStorage.getItem('user_posts') || '[]');
+                                posts.unshift(newPost);
+                                localStorage.setItem('user_posts', JSON.stringify(posts));
+
+                                const newPostElement = document.createElement('div');
+                                newPostElement.innerHTML = renderPostHtml({ ...newPost, isCurrentUserPost: true }, userName, userProfilePicture);
+                                if (postsListDiv) postsListDiv.prepend(newPostElement.firstElementChild);
+
+                                const createdPostElement = newPostElement.firstElementChild;
+                                if (createdPostElement) {
+                                    const editBtn = createdPostElement.querySelector('.edit-post-button');
+                                    const deleteBtn = createdPostElement.querySelector('.delete-post-button');
+                                    if (editBtn) editBtn.addEventListener('click', () => editPost(createdPostElement.dataset.postId));
+                                    if (deleteBtn) deleteBtn.addEventListener('click', () => deletePost(createdPostElement.dataset.postId));
+                                }
+
+                                newPostForm.classList.add('hidden');
+                                newPostButton.classList.remove('hidden');
+                                postTextArea.value = '';
+                                postFeelingSelect.value = '';
+                                charCount.textContent = '0 / 500';
+                                postImageInput.value = '';
+                                updateProfileCounts();
+
+                            } catch (error) {
+                                console.error('Error creating post:', error);
+                                alert('An error occurred while creating the post.');
+                            }
+
                         });
                     }
 
-                    // Function to edit a post (Sends to Backend)
-                    async function editPost(postId) { // Make async
-                        const posts = JSON.parse(localStorage.getItem('user_posts') || '[]'); // Still use localStorage for current view's posts
+                    async function editPost(postId) {
+                        const posts = JSON.parse(localStorage.getItem('user_posts') || '[]');
                         const postToEdit = posts.find(post => post.id == postId);
 
                         if (postToEdit) {
@@ -1036,59 +1197,71 @@
                             saveEditedPostButton.onclick = null;
                             cancelEditPostButton.onclick = null;
 
-                            saveEditedPostButton.onclick = async () => { // Make async
+                            saveEditedPostButton.onclick = async () => {
                                 const updatedContent = editPostTextarea.value.trim();
                                 const updatedFeeling = editPostFeelingSelect.value;
                                 const updatedImageFile = editPostImageInput.files[0];
 
-                                if (updatedContent.length >= 10 && updatedContent.length <= 500) {
-                                    let updatedImageUrl = postToEdit.image; // Start with existing image
-
-                                    if (updatedImageFile) {
-                                        updatedImageUrl = await new Promise((resolve) => {
-                                            const reader = new FileReader();
-                                            reader.onload = function (e) { resolve(e.target.result); };
-                                            reader.readAsDataURL(updatedImageFile);
-                                        });
-                                    }
-
-                                    try {
-                                        const response = await fetch(`/posts/${postId}`, { // New PUT endpoint
-                                            method: 'PUT',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-                                            },
-                                            body: JSON.stringify({
-                                                content: updatedContent,
-                                                image: updatedImageUrl,
-                                                feeling: updatedFeeling
-                                            })
-                                        });
-
-                                        const result = await response.json();
-
-                                        if (response.ok) {
-                                            console.log('Post updated successfully:', result.post);
-                                            // Update the post in local storage with the backend's response
-                                            const updatedPosts = posts.map(p => p.id == postId ? result.post : p);
-                                            localStorage.setItem('user_posts', JSON.stringify(updatedPosts));
-
-                                            editModal.classList.add('hidden');
-                                            editModal.classList.remove('flex');
-                                            renderPostsContent(); // Re-render to show updated post
-                                        } else {
-                                            console.error('Failed to update post:', result);
-                                            alert('Failed to update post: ' + (result.error || 'Unknown error'));
-                                        }
-                                    } catch (error) {
-                                        console.error('Error updating post:', error);
-                                        alert('An error occurred while updating the post.');
-                                    }
-
-                                } else {
+                                if (updatedContent.length < 10 || updatedContent.length > 500) {
                                     alert('Post must be between 10 and 500 characters.');
+                                    return;
                                 }
+
+                                let updatedImageUrl = postToEdit.image;
+
+                                if (updatedImageFile) {
+                                    if (updatedImageFile.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+                                        alert(`Image file size exceeds the limit of ${MAX_IMAGE_SIZE_MB} MB. Please choose a smaller image.`);
+                                        return;
+                                    }
+                                    updatedImageUrl = await new Promise((resolve) => {
+                                        const reader = new FileReader();
+                                        reader.onload = function (e) { resolve(e.target.result); };
+                                        reader.readAsDataURL(updatedImageFile);
+                                    });
+                                }
+
+                                try {
+                                    const response = await fetch(`/posts/${postId}`, {
+                                        method: 'PUT',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                                        },
+                                        body: JSON.stringify({
+                                            content: updatedContent,
+                                            image: updatedImageUrl,
+                                            feeling: updatedFeeling
+                                        })
+                                    });
+
+                                    if (!response.ok) {
+                                        let errorMessage = 'Failed to update post.';
+                                        try {
+                                            const errorResult = await response.json();
+                                            errorMessage = errorResult.error || errorMessage;
+                                        } catch (e) {
+                                            errorMessage = await response.text();
+                                            console.error('Server response was not JSON:', errorMessage);
+                                        }
+                                        alert('Failed to update post: ' + errorMessage);
+                                        return;
+                                    }
+
+                                    const result = await response.json();
+
+                                    console.log('Post updated successfully:', result.post);
+                                    const updatedPosts = posts.map(p => p.id == postId ? result.post : p);
+                                    localStorage.setItem('user_posts', JSON.stringify(updatedPosts));
+
+                                    editModal.classList.add('hidden');
+                                    editModal.classList.remove('flex');
+                                    renderPostsContent();
+                                } catch (error) {
+                                    console.error('Error updating post:', error);
+                                    alert('An error occurred while updating the post.');
+                                }
+
                             };
 
                             cancelEditPostButton.onclick = () => {
@@ -1098,35 +1271,41 @@
                         }
                     }
 
-                    // Function to delete a post (Sends to Backend)
-                    async function deletePost(postId) { // Make async
+                    async function deletePost(postId) {
                         if (confirm('Are you sure you want to delete this post?')) {
                             try {
-                                const response = await fetch(`/posts/${postId}`, { // New DELETE endpoint
+                                const response = await fetch(`/posts/${postId}`, {
                                     method: 'DELETE',
                                     headers: {
                                         'Authorization': 'Bearer ' + localStorage.getItem('access_token')
                                     }
                                 });
 
+                                if (!response.ok) {
+                                    let errorMessage = 'Failed to delete post.';
+                                    try {
+                                        const errorResult = await response.json();
+                                        errorMessage = errorResult.error || errorMessage;
+                                    } catch (e) {
+                                        errorMessage = await response.text();
+                                        console.error('Server response was not JSON:', errorMessage);
+                                    }
+                                    alert('Failed to delete post: ' + errorMessage);
+                                    return;
+                                }
+
                                 const result = await response.json();
 
-                                if (response.ok) {
-                                    console.log('Post deleted successfully:', result.postId);
-                                    // Remove from localStorage
-                                    let posts = JSON.parse(localStorage.getItem('user_posts') || '[]');
-                                    posts = posts.filter(post => post.id != postId);
-                                    localStorage.setItem('user_posts', JSON.stringify(posts));
+                                console.log('Post deleted successfully:', result.postId);
+                                let posts = JSON.parse(localStorage.getItem('user_posts') || '[]');
+                                posts = posts.filter(post => post.id != postId);
+                                localStorage.setItem('user_posts', JSON.stringify(posts));
 
-                                    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-                                    if (postElement) postElement.remove();
-                                    updateProfileCounts();
-                                    if (postsListDiv && posts.length === 0) {
-                                        postsListDiv.innerHTML = '<p class="text-gray-500 text-center mt-4">No posts yet. Be the first to share something!</p>';
-                                    }
-                                } else {
-                                    console.error('Failed to delete post:', result);
-                                    alert('Failed to delete post: ' + (result.error || 'Unknown error'));
+                                const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+                                if (postElement) postElement.remove();
+                                updateProfileCounts();
+                                if (postsListDiv && posts.length === 0) {
+                                    postsListDiv.innerHTML = '<p class="text-gray-500 text-center mt-4">No posts yet. Be the first to share something!</p>';
                                 }
                             } catch (error) {
                                 console.error('Error deleting post:', error);
@@ -1135,9 +1314,8 @@
                         }
                     }
 
-                    // --- Fetch posts from backend on load ---
                     try {
-                        const response = await fetch('/posts/my', { // New GET endpoint
+                        const response = await fetch('/posts/my', {
                             method: 'GET',
                             headers: {
                                 'Authorization': 'Bearer ' + localStorage.getItem('access_token')
@@ -1147,12 +1325,11 @@
 
                         if (response.ok) {
                             const fetchedPosts = result.posts;
-                            // Store fetched posts in localStorage for immediate future use (optional, but good practice)
                             localStorage.setItem('user_posts', JSON.stringify(fetchedPosts));
 
                             if (postsListDiv) {
                                 if (fetchedPosts.length > 0) {
-                                    postsListDiv.innerHTML = fetchedPosts.map(post => renderPostHtml(post)).join('');
+                                    postsListDiv.innerHTML = fetchedPosts.map(post => renderPostHtml({ ...post, isCurrentUserPost: true }, userName, userProfilePicture)).join('');
                                     document.querySelectorAll('.edit-post-button').forEach(button => {
                                         button.addEventListener('click', (e) => editPost(e.target.closest('.timeline-post').dataset.postId));
                                     });
@@ -1163,7 +1340,7 @@
                                     postsListDiv.innerHTML = '<p class="text-gray-500 text-center mt-4">No posts yet. Be the first to share something!</p>';
                                 }
                             }
-                            updateProfileCounts(); // Update counts based on fetched posts
+                            updateProfileCounts();
                         } else {
                             console.error('Failed to fetch posts:', result);
                             if (postsListDiv) postsListDiv.innerHTML = '<p class="text-red-500 text-center mt-4">Failed to load posts. Please try again.</p>';
@@ -1174,96 +1351,493 @@
                     }
                 }
 
-                // Helper function to render photos content (no changes needed here for now)
+                // Helper function to render photos content (now Moments)
                 function renderPhotosContent() {
                     if (!timelineContent) return;
 
+                    // Store event listener references
+                    let selectMomentButtonHandler = null;
+                    let submitPhotoButtonHandler = null;
+                    let uploadPhotoInputHandler = null;
+
+                    // Remove previous event listeners if they exist (Crucial for avoiding multiple listeners)
+                    const existingSelectButton = document.getElementById('select-moment-button');
+                    const existingSubmitButton = document.getElementById('submit-photo');
+                    const existingUploadInput = document.getElementById('upload-photo');
+
+                    if (existingSelectButton && existingSelectButton._eventHandler) {
+                        existingSelectButton.removeEventListener('click', existingSelectButton._eventHandler);
+                        delete existingSelectButton._eventHandler;
+                    }
+                    if (existingSubmitButton && existingSubmitButton._eventHandler) {
+                        existingSubmitButton.removeEventListener('click', existingSubmitButton._eventHandler);
+                        delete existingSubmitButton._eventHandler;
+                    }
+                    if (existingUploadInput && existingUploadInput._eventHandler) {
+                        existingUploadInput.removeEventListener('change', existingUploadInput._eventHandler);
+                        delete existingUploadInput._eventHandler;
+                    }
+
+                    // --- RE-INSERT THE CORRECT HTML STRUCTURE FOR MOMENTS TAB ---
                     timelineContent.innerHTML = `
-                        <div class="mb-4">
-                            <label for="upload-photo" class="block text-gray-700 text-sm font-bold mb-2">Upload New Photo:</label>
-                            <input type="file" id="upload-photo" accept="image/*" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                            <button id="submit-photo" class="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Upload Photo</button>
-                            <p id="photo-upload-message" class="text-sm text-gray-500 mt-2"></p>
+                        <div class="mb-4 flex justify-center space-x-2">
+                            <div class="w-40 h-10">
+                                <label for="upload-photo" class="block w-full h-full relative">
+                                    <span class="sr-only">Select New Moment (Image/Video)</span>
+                                    <input type="file" id="upload-photo" accept="image/*,video/*" class="hidden">
+                                    <button type="button" id="select-moment-button"
+                                            class="bg-[#3B82F6] hover:bg-[#2f68c4] text-white font-bold py-2 px-6 rounded
+                                                   focus:outline-none focus:shadow-outline cursor-pointer whitespace-nowrap
+                                                   w-full h-full flex items-center justify-center">
+                                        Select Moment
+                                    </button>
+                                </label>
+                            </div>
+
+                            <div class="w-40 h-10">
+                                <button id="submit-photo"
+                                        class="bg-[#3B82F6] hover:bg-[#2f68c4] text-white font-bold py-2 px-6 rounded
+                                               focus:outline-none focus:shadow-outline whitespace-nowrap
+                                               w-full h-full flex items-center justify-center">
+                                    Upload Moment
+                                </button>
+                            </div>
                         </div>
-                        <div id="photos-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        <p id="photo-upload-message" class="text-sm text-gray-500 text-center mt-2"></p>
+
+                        <div id="photos-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-4">
                         </div>
                     `;
+                    // --- END OF CORRECT HTML RE-INSERTION ---
 
+                    // Get references to the newly created DOM elements
                     const uploadPhotoInput = document.getElementById('upload-photo');
+                    const selectMomentButton = document.getElementById('select-moment-button');
                     const submitPhotoButton = document.getElementById('submit-photo');
                     const photoUploadMessage = document.getElementById('photo-upload-message');
                     const photosGrid = document.getElementById('photos-grid');
 
-                    function displayPhotos() {
-                        const storedPhotos = JSON.parse(localStorage.getItem('user_photos') || '[]');
-                        if (photosGrid) {
-                            photosGrid.innerHTML = '';
-                            if (storedPhotos.length > 0) {
-                                storedPhotos.forEach(photo => {
-                                    const imgContainer = document.createElement('div');
-                                    imgContainer.classList.add('relative', 'group');
-                                    imgContainer.innerHTML = `
-                                        <img src="${photo.src}" alt="User Photo" class="w-full h-auto object-cover aspect-square rounded-sm">
-                                        <button data-photo-id="${photo.id}" class="delete-photo-button absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                            &times;
-                                        </button>
-                                    `;
-                                    photosGrid.appendChild(imgContainer);
+                    // Image editing modal elements (ensure these are also correctly retrieved after DOM update)
+                    const imageEditorModal = document.getElementById('image-editor-modal');
+                    const imagePreviewCanvas = document.getElementById('image-preview-canvas');
+                    const ctx = imagePreviewCanvas ? imagePreviewCanvas.getContext('2d') : null;
+                    const brightnessSlider = document.getElementById('brightness-slider');
+                    const saturationSlider = document.getElementById('saturation-slider');
+                    const brightnessValueSpan = document.getElementById('brightness-value');
+                    const saturationValueSpan = document.getElementById('saturation-value');
+                    const momentNoteTextarea = document.getElementById('moment-note');
+                    const momentNoteCharCount = document.getElementById('moment-note-char-count');
+                    const cancelImageEditButton = document.getElementById('cancel-image-edit');
+                    const applyImageEditsButton = document.getElementById('apply-image-edits');
+
+                    // Expanded media modal elements (ensure these are also correctly retrieved)
+                    const expandedMediaModal = document.getElementById('expanded-media-modal');
+                    const closeExpandedMediaButton = document.getElementById('close-expanded-media');
+                    const expandedMediaContent = document.getElementById('expanded-media-content');
+                    const expandedMediaNote = document.getElementById('expanded-media-note');
+
+                    let originalImage = null;
+                    let currentEditedDataURL = null;
+                    let currentFileType = null;
+
+                    const MAX_UPLOAD_SIZE_MB = 20;
+
+                    async function displayPhotos() { // Make it async
+                        if (!photosGrid) return;
+
+                        photosGrid.innerHTML = '<p class="text-gray-500 text-center col-span-full mt-4">Loading moments...</p>';
+
+                        try {
+                            const response = await fetch('/moments/my', {
+                                method: 'GET',
+                                headers: {
+                                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                                }
+                            });
+                            const result = await response.json();
+
+                            if (response.ok) {
+                                const fetchedMoments = result.moments;
+                                localStorage.setItem('user_photos', JSON.stringify(fetchedMoments)); // Still store in local storage as a cache
+                                // updateProfileCounts(); // Call this after new data is set
+
+                                photosGrid.innerHTML = ''; // Clear loading message
+
+                                if (fetchedMoments.length > 0) {
+                                    fetchedMoments.forEach(moment => { // Changed 'photo' to 'moment'
+                                        const imgContainer = document.createElement('div');
+                                        imgContainer.classList.add('relative', 'group', 'aspect-w-9', 'aspect-h-16', 'cursor-pointer');
+                                        imgContainer.dataset.id = moment.id;
+                                        imgContainer.dataset.note = moment.note || '';
+
+                                        let mediaElement = '';
+                                        if (moment.type && moment.type.startsWith('video/')) {
+                                            mediaElement = `<video src="${moment.src}" class="absolute inset-0 w-full h-full object-cover rounded-sm" controls loop muted playsinline></video>`;
+                                        } else {
+                                            mediaElement = `<img src="${moment.src}" alt="User Photo" class="absolute inset-0 w-full h-full object-cover rounded-sm">`;
+                                        }
+
+                                        imgContainer.innerHTML = `
+                                            ${mediaElement}
+                                            <button data-photo-id="${moment.id}" class="delete-photo-button absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                                &times;
+                                            </button>
+                                        `;
+                                        photosGrid.appendChild(imgContainer);
+                                    });
+
+                                    document.querySelectorAll('.delete-photo-button').forEach(button => {
+                                        button.addEventListener('click', (e) => {
+                                            e.stopPropagation();
+                                            const photoId = e.target.dataset.photoId;
+                                            deleteMoment(photoId); // Call deleteMoment instead of deletePhoto
+                                        });
+                                    });
+
+                                    document.querySelectorAll('.aspect-w-9').forEach(container => {
+                                        container.addEventListener('click', (e) => {
+                                            const momentId = e.currentTarget.dataset.id;
+                                            const note = e.currentTarget.dataset.note;
+                                            const moment = fetchedMoments.find(m => m.id == momentId); // Changed 'photo' to 'moment'
+                                            if (moment) {
+                                                openExpandedMediaModal(moment.src, moment.type, note);
+                                            }
+                                        });
+                                    });
+
+                                } else {
+                                    photosGrid.innerHTML = '<p class="text-gray-500 text-center col-span-full mt-4">No moments yet. Upload your first moment!</p>';
+                                }
+                                updateProfileCounts(); // Call it here after the grid is updated
+
+                            } else {
+                                console.error('Failed to fetch moments:', result);
+                                photosGrid.innerHTML = '<p class="text-red-500 text-center col-span-full mt-4">Failed to load moments. Please try again.</p>';
+                            }
+                        } catch (error) {
+                            console.error('Error fetching moments:', error);
+                            photosGrid.innerHTML = '<p class="text-red-500 text-center col-span-full mt-4">An error occurred while fetching moments.</p>';
+                        }
+                    }
+
+                    async function deleteMoment(momentId) { // Renamed from deletePhoto
+                        if (confirm('Are you sure you want to delete this moment?')) {
+                            try {
+                                const response = await fetch(`/moments/${momentId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                                    }
                                 });
 
-                                document.querySelectorAll('.delete-photo-button').forEach(button => {
-                                    button.addEventListener('click', (e) => {
-                                        const photoId = e.target.dataset.photoId;
-                                        deletePhoto(photoId);
-                                    });
-                                });
-                            } else {
-                                photosGrid.innerHTML = '<p class="text-gray-500 text-center col-span-full mt-4">No photos yet. Upload your first photo!</p>';
+                                if (!response.ok) {
+                                    let errorMessage = 'Failed to delete moment.';
+                                    try {
+                                        const errorResult = await response.json();
+                                        errorMessage = errorResult.error || errorMessage;
+                                    } catch (e) {
+                                        errorMessage = await response.text();
+                                        console.error('Server response was not JSON:', errorMessage);
+                                    }
+                                    alert('Failed to delete moment: ' + errorMessage);
+                                    return;
+                                }
+
+                                const result = await response.json();
+                                console.log('Moment deleted successfully:', result.momentId);
+
+                                // Update local storage after successful backend deletion
+                                let moments = JSON.parse(localStorage.getItem('user_photos') || '[]');
+                                moments = moments.filter(m => m.id != momentId); // Changed 'photo' to 'm'
+                                localStorage.setItem('user_photos', JSON.stringify(moments));
+
+                                displayPhotos(); // Re-render the grid
+                                updateProfileCounts(); // Update counts
+
+                            } catch (error) {
+                                console.error('Error deleting moment:', error);
+                                alert('An error occurred while deleting the moment.');
                             }
                         }
-                        updateProfileCounts();
                     }
 
-                    function deletePhoto(photoId) {
-                        if (confirm('Are you sure you want to delete this photo?')) {
-                            let photos = JSON.parse(localStorage.getItem('user_photos') || '[]');
-                            photos = photos.filter(photo => photo.id != photoId);
-                            localStorage.setItem('user_photos', JSON.stringify(photos));
-                            displayPhotos();
+                    // --- Event Listener Assignments with Cleanup (as before, crucial for multiple tab switches) ---
+                    // Select Moment Button
+                    selectMomentButtonHandler = () => uploadPhotoInput.click();
+                    if (selectMomentButton) {
+                        selectMomentButton.addEventListener('click', selectMomentButtonHandler);
+                        selectMomentButton._eventHandler = selectMomentButtonHandler;
+                    }
+
+                    // Upload Photo Input (file selection)
+                    uploadPhotoInputHandler = (event) => {
+                        const file = event.target.files[0];
+                        if (!file) {
+                            photoUploadMessage.textContent = '';
+                            return;
                         }
+
+                        currentFileType = file.type;
+                        photoUploadMessage.textContent = '';
+
+                        if (file.size > MAX_UPLOAD_SIZE_MB * 1024 * 1024) {
+                            photoUploadMessage.textContent = `File size exceeds the limit of ${MAX_UPLOAD_SIZE_MB} MB.`;
+                            uploadPhotoInput.value = '';
+                            originalImage = null;
+                            currentEditedDataURL = null;
+                            currentFileType = null;
+                            return;
+                        }
+
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            if (currentFileType.startsWith('image/')) {
+                                originalImage = new Image();
+                                originalImage.onload = () => {
+                                    if (brightnessSlider) brightnessSlider.value = 100;
+                                    if (saturationSlider) saturationSlider.value = 100;
+                                    if (brightnessValueSpan) brightnessValueSpan.textContent = '100%';
+                                    if (saturationValueSpan) saturationValueSpan.textContent = '100%';
+                                    if (momentNoteTextarea) momentNoteTextarea.value = '';
+                                    if (momentNoteCharCount) momentNoteCharCount.textContent = '0 / 200';
+                                    openImageEditor(originalImage);
+                                };
+                                originalImage.src = e.target.result;
+                            } else if (currentFileType.startsWith('video/')) {
+                                currentEditedDataURL = e.target.result;
+                                photoUploadMessage.textContent = 'Video selected. Click "Upload Moment" to save.';
+                            } else {
+                                photoUploadMessage.textContent = 'Unsupported file type. Please select an image or video.';
+                                uploadPhotoInput.value = '';
+                                originalImage = null;
+                                currentEditedDataURL = null;
+                                currentFileType = null;
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    };
+                    if (uploadPhotoInput) {
+                        uploadPhotoInput.addEventListener('change', uploadPhotoInputHandler);
+                        uploadPhotoInput._eventHandler = uploadPhotoInputHandler;
                     }
 
-                    if (submitPhotoButton) {
-                        submitPhotoButton.addEventListener('click', () => {
-                            const file = uploadPhotoInput.files[0];
-                            if (file) {
-                                if (file.type.startsWith('image/')) {
-                                    const reader = new FileReader();
-                                    reader.onload = function (e) {
-                                        const newPhoto = {
-                                            id: Date.now(),
-                                            src: e.target.result
-                                        };
-                                        let photos = JSON.parse(localStorage.getItem('user_photos') || '[]');
-                                        photos.unshift(newPhoto);
-                                        localStorage.setItem('user_photos', JSON.stringify(photos));
-                                        if (photoUploadMessage) photoUploadMessage.textContent = 'Photo uploaded successfully!';
-                                        if (uploadPhotoInput) uploadPhotoInput.value = '';
-                                        displayPhotos();
-                                    };
-                                    reader.readAsDataURL(file);
+                    // Upload Moment Button
+                    submitPhotoButtonHandler = async () => { // Make it async
+                        if (currentEditedDataURL && currentFileType) {
+                            // For images, if the editor was opened, currentEditedDataURL is already the canvas output (PNG).
+                            // If it's a video, currentEditedDataURL is the original video data URL.
+                            try {
+                                const response = await fetch('/moments', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                                    },
+                                    body: JSON.stringify({
+                                        src: currentEditedDataURL, // Send the Base64 string for both image and video
+                                        type: currentFileType,
+                                        note: momentNoteTextarea ? momentNoteTextarea.value.trim() : '' // Note is only for images
+                                    })
+                                });
+
+                                const result = await response.json();
+
+                                if (response.ok) {
+                                    console.log('Moment uploaded successfully via backend:', result.moment);
+                                    photoUploadMessage.textContent = 'Moment uploaded successfully!';
+                                    uploadPhotoInput.value = '';
+                                    displayPhotos(); // Re-fetch and re-render photos from backend
+                                    imageEditorModal.classList.add('hidden'); // Close editor if it was open
+                                    imageEditorModal.classList.remove('flex');
+                                    originalImage = null;
+                                    currentEditedDataURL = null;
+                                    currentFileType = null;
                                 } else {
-                                    if (photoUploadMessage) photoUploadMessage.textContent = 'Please select an image file.';
+                                    let errorMessage = 'Failed to upload moment.';
+                                    try {
+                                        errorMessage = result.error || errorMessage;
+                                    } catch (e) {
+                                        // If response is not JSON
+                                        errorMessage = await response.text();
+                                    }
+                                    alert('Error uploading moment: ' + errorMessage);
+                                }
+                            } catch (error) {
+                                console.error('Error during moment upload:', error);
+                                alert('An error occurred during moment upload.');
+                            }
+                        } else {
+                            photoUploadMessage.textContent = 'Please select a file first using "Select Moment".';
+                        }
+                    };
+                    if (submitPhotoButton) {
+                        submitPhotoButton.addEventListener('click', submitPhotoButtonHandler);
+                        submitPhotoButton._eventHandler = submitPhotoButtonHandler;
+                    }
+
+                    function openImageEditor(image) {
+                        if (!imageEditorModal || !imagePreviewCanvas || !ctx) return;
+                        const maxWidth = 600;
+                        const scale = Math.min(maxWidth / image.width, 1);
+                        imagePreviewCanvas.width = image.width * scale;
+                        imagePreviewCanvas.height = image.height * scale;
+                        ctx.clearRect(0, 0, imagePreviewCanvas.width, imagePreviewCanvas.height);
+                        ctx.drawImage(image, 0, 0, imagePreviewCanvas.width, imagePreviewCanvas.height);
+                        currentEditedDataURL = imagePreviewCanvas.toDataURL('image/png');
+                        imageEditorModal.classList.remove('hidden');
+                        imageEditorModal.classList.add('flex');
+                    }
+
+                    function applyFilters() {
+                        if (!originalImage || !ctx) return;
+                        const brightness = parseFloat(brightnessSlider.value) / 100;
+                        const saturation = parseFloat(saturationSlider.value) / 100;
+                        ctx.clearRect(0, 0, imagePreviewCanvas.width, imagePreviewCanvas.height);
+                        ctx.drawImage(originalImage, 0, 0, imagePreviewCanvas.width, imagePreviewCanvas.height);
+                        const imageData = ctx.getImageData(0, 0, imagePreviewCanvas.width, imagePreviewCanvas.height);
+                        const data = imageData.data;
+                        for (let i = 0; i < data.length; i += 4) {
+                            data[i] = data[i] * brightness;
+                            data[i + 1] = data[i + 1] * brightness;
+                            data[i + 2] = data[i + 2] * brightness;
+                            const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                            data[i] = gray * (1 - saturation) + data[i] * saturation;
+                            data[i + 1] = gray * (1 - saturation) + data[i + 1] * saturation;
+                            data[i + 2] = gray * (1 - saturation) + data[i + 2] * saturation;
+                            data[i] = Math.min(255, Math.max(0, data[i]));
+                            data[i + 1] = Math.min(255, Math.max(0, data[i + 1]));
+                            data[i + 2] = Math.min(255, Math.max(0, data[i + 2]));
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+                        currentEditedDataURL = imagePreviewCanvas.toDataURL('image/png');
+                    }
+
+                    // --- Slider and Note Event Listeners (ensure these are correctly wired up after re-render) ---
+                    if (brightnessSlider) {
+                        brightnessSlider.addEventListener('input', () => {
+                            brightnessValueSpan.textContent = `${brightnessSlider.value}%`;
+                            applyFilters();
+                        });
+                    }
+                    if (saturationSlider) {
+                        saturationSlider.addEventListener('input', () => {
+                            saturationValueSpan.textContent = `${saturationSlider.value}%`;
+                            applyFilters();
+                        });
+                    }
+                    if (momentNoteTextarea) {
+                        momentNoteTextarea.addEventListener('input', () => {
+                            momentNoteCharCount.textContent = `${momentNoteTextarea.value.length} / 200`;
+                        });
+                    }
+
+                    if (cancelImageEditButton) {
+                        cancelImageEditButton.addEventListener('click', () => {
+                            imageEditorModal.classList.add('hidden');
+                            imageEditorModal.classList.remove('flex');
+                            uploadPhotoInput.value = '';
+                            originalImage = null;
+                            currentEditedDataURL = null;
+                            currentFileType = null;
+                            photoUploadMessage.textContent = '';
+                        });
+                    }
+
+                    if (applyImageEditsButton) {
+                        applyImageEditsButton.addEventListener('click', async () => { // Made async
+                            if (currentEditedDataURL && currentFileType === 'image/png') {
+                                try {
+                                    const response = await fetch('/moments', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                                        },
+                                        body: JSON.stringify({
+                                            src: currentEditedDataURL,
+                                            type: 'image/png',
+                                            note: momentNoteTextarea ? momentNoteTextarea.value.trim() : ''
+                                        })
+                                    });
+
+                                    const result = await response.json();
+
+                                    if (response.ok) {
+                                        console.log('Moment uploaded successfully via backend:', result.moment);
+                                        photoUploadMessage.textContent = 'Moment uploaded successfully!';
+                                        uploadPhotoInput.value = '';
+                                        displayPhotos();
+                                        imageEditorModal.classList.add('hidden');
+                                        imageEditorModal.classList.remove('flex');
+                                        originalImage = null;
+                                        currentEditedDataURL = null;
+                                        currentFileType = null;
+                                    } else {
+                                        let errorMessage = 'Failed to upload moment.';
+                                        try {
+                                            errorMessage = result.error || errorMessage;
+                                        } catch (e) {
+                                            errorMessage = await response.text();
+                                        }
+                                        alert('Error uploading moment: ' + errorMessage);
+                                    }
+                                } catch (error) {
+                                    console.error('Error during moment upload:', error);
+                                    alert('An error occurred during moment upload.');
                                 }
                             } else {
-                                if (photoUploadMessage) photoUploadMessage.textContent = 'No file selected.';
+                                alert('Error: No edited image data to upload.');
                             }
                         });
                     }
 
-                    displayPhotos();
-                }
 
+                    function openExpandedMediaModal(src, type, note) {
+                        if (!expandedMediaModal || !expandedMediaContent) return;
+                        expandedMediaContent.innerHTML = '';
+                        expandedMediaNote.textContent = '';
+                        expandedMediaNote.classList.add('hidden');
+
+                        if (type && type.startsWith('video/')) {
+                            const videoElement = document.createElement('video');
+                            videoElement.src = src;
+                            videoElement.controls = true;
+                            videoElement.loop = true;
+                            videoElement.autoplay = true;
+                            videoElement.muted = true;
+                            videoElement.playsInline = true;
+                            expandedMediaContent.appendChild(videoElement);
+                        } else {
+                            const imgElement = document.createElement('img');
+                            imgElement.src = src;
+                            imgElement.alt = "Expanded Moment";
+                            expandedMediaContent.appendChild(imgElement);
+                        }
+
+                        if (note) {
+                            expandedMediaNote.textContent = note;
+                            expandedMediaNote.classList.remove('hidden');
+                        }
+                        expandedMediaModal.classList.remove('hidden');
+                        expandedMediaModal.classList.add('flex');
+                    }
+
+                    if (closeExpandedMediaButton) {
+                        closeExpandedMediaButton.addEventListener('click', () => {
+                            const media = expandedMediaContent.querySelector('img, video');
+                            if (media && media.tagName === 'VIDEO') {
+                                media.pause();
+                            }
+                            expandedMediaModal.classList.add('hidden');
+                            expandedMediaModal.classList.remove('flex');
+                            expandedMediaContent.innerHTML = '';
+                            expandedMediaNote.textContent = '';
+                            expandedMediaNote.classList.add('hidden');
+                        });
+                    }
+
+                    displayPhotos(); // Initial display of photos when Moments tab is rendered
+                }
 
                 if (tabButtons && timelineContent) {
                     tabButtons.forEach(tab => {
@@ -1273,7 +1847,7 @@
 
                             if (tab.textContent === 'Posts') {
                                 renderPostsContent();
-                            } else if (tab.textContent === 'Photos') {
+                            } else if (tab.textContent === 'Moments') {
                                 renderPhotosContent();
                             } else if (tab.textContent === 'Highlights') {
                                 timelineContent.innerHTML = `
@@ -1291,8 +1865,59 @@
                     });
                 }
 
-
                 renderPostsContent();
+            }
+        }
+
+        async function fetchGlobalPosts() {
+            const globalPostsListDiv = document.getElementById('global-posts-list');
+            if (!globalPostsListDiv) return;
+
+            globalPostsListDiv.innerHTML = '<p class="text-gray-500 text-center mt-4">Loading posts...</p>';
+
+            const dummyGlobalPosts = [
+                {
+                    id: 'global-1',
+                    userId: 'user-b',
+                    authorName: 'Alice',
+                    authorAvatar: '/img/razom-illustration.png', // Using local placeholder
+                    content: 'Enjoying a beautiful day out in nature! So refreshing. #naturelover',
+                    image: '/img/razom-illustration.png', // Using local placeholder
+                    feeling: 'happy',
+                    timestamp: new Date(Date.now() - 86400000).toISOString()
+                },
+                {
+                    id: 'global-2',
+                    userId: 'user-c',
+                    authorName: 'Bob',
+                    authorAvatar: '/img/razom-illustration.png', // Using local placeholder
+                    content: 'Just finished a great coding session! Feeling productive. 💻',
+                    image: '',
+                    feeling: 'excited',
+                    timestamp: new Date(Date.now() - 172800000).toISOString()
+                },
+                {
+                    id: 'global-3',
+                    userId: 'user-a',
+                    authorName: 'Charlie',
+                    authorAvatar: '/img/razom-illustration.png', // Using local placeholder
+                    content: 'Tried a new recipe today, it was delicious! 🍜😋',
+                    image: '/img/razom-illustration.png', // Using local placeholder
+                    feeling: 'loved',
+                    timestamp: new Date(Date.now() - 259200000).toISOString()
+                }
+            ];
+
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            const currentUserId = JSON.parse(localStorage.getItem('user_data') || '{}').id;
+
+            if (dummyGlobalPosts.length > 0) {
+                globalPostsListDiv.innerHTML = dummyGlobalPosts.map(post =>
+                    renderPostHtml({ ...post, isCurrentUserPost: post.userId === currentUserId }, post.authorName, post.authorAvatar)
+                ).join('');
+            } else {
+                globalPostsListDiv.innerHTML = '<p class="text-gray-500 text-center mt-4">No public posts available yet.</p>';
             }
         }
 
@@ -1303,8 +1928,6 @@
                 event.preventDefault();
                 if (href === 'loginpage.html') {
                     window.location.href = href;
-                } else if (href === 'chat') {
-                    loadContent('chat');
                 } else {
                     loadContent(href);
                 }
@@ -1327,6 +1950,7 @@
                         localStorage.removeItem('user_posts');
                         localStorage.removeItem('user_photos');
                         localStorage.removeItem('user_data');
+                        localStorage.removeItem('user_contacts');
                         window.location.href = '/login';
                     } else {
                         console.error('Logout failed');
@@ -1352,7 +1976,7 @@
         } else if (currentHash === 'chat') {
             loadContent('chat');
         } else {
-            loadContent('');
+            loadContent('home');
         }
     </script>
 </body>

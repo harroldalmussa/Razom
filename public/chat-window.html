@@ -6,12 +6,21 @@
     <title>Chat Window</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" href="/img/razom-logo.png" type="image/png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Optional: Add some styling for the search input and results if needed */
+        .highlight {
+            background-color: yellow;
+            font-weight: bold;
+        }
+    </style>
 </head>
+
 <body class="m-0 font-sans bg-gray-100">
     <div class="flex items-center justify-between bg-white px-3 py-2 border-b border-gray-200">
         <button id="backToChatList" class="mr-4 text-gray-600 hover:text-gray-800">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="w-6 h-6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12m0 0l7.5-7.5M8.25 12h13.5" />
             </svg>
         </button>
@@ -21,6 +30,15 @@
             <span id="profileName" class="font-bold text-base sm:text-lg">User Name</span>
         </div>
         <div class="flex items-center">
+            <input type="text" id="searchMessageInput" placeholder="Search messages..."
+                class="hidden sm:block px-2 py-1 rounded-full border border-gray-300 text-sm outline-none w-32 md:w-48 transition-all duration-200 focus:w-64 focus:border-blue-500">
+            <button id="searchButton" class="ml-2 text-gray-600 hover:text-gray-800">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+            </button>
             <button title="Voice Call" id="callBtn" class="ml-2 text-2xl bg-transparent border-none cursor-pointer">📞
             </button>
             <button title="Video Call" id="videoCallBtn" class="ml-2 text-2xl bg-transparent border-none cursor-pointer">
@@ -28,7 +46,12 @@
         </div>
     </div>
     <div id="chatMessages" class="px-3 py-3 h-[calc(100vh-110px)] overflow-y-auto bg-gray-50 flex flex-col">
-        </div>
+        <div class="mb-3 max-w-[80%] sm:max-w-[60%] px-4 py-2 rounded-2xl bg-gray-200 self-start" data-message-id="1">Hello there!</div>
+        <div class="mb-3 max-w-[80%] sm:max-w-[60%] px-4 py-2 rounded-2xl bg-blue-500 text-white self-end" data-message-id="2">Hi! How are you doing today?</div>
+        <div class="mb-3 max-w-[80%] sm:max-w-[60%] px-4 py-2 rounded-2xl bg-gray-200 self-start" data-message-id="3">I'm good, thanks! Just working on some project.</div>
+        <div class="mb-3 max-w-[80%] sm:max-w-[60%] px-4 py-2 rounded-2xl bg-blue-500 text-white self-end" data-message-id="4">That sounds interesting. Is it a coding project?</div>
+        <div class="mb-3 max-w-[80%] sm:max-w-[60%] px-4 py-2 rounded-2xl bg-gray-200 self-start" data-message-id="5">Yes, it involves a lot of JavaScript.</div>
+    </div>
     <div class="flex items-center px-3 py-2 bg-white border-t border-gray-200">
         <input type="text" id="messageInput" placeholder="Type a message..."
             class="flex-1 px-3 py-2 rounded-full border border-gray-300 mr-2 outline-none" />
@@ -123,20 +146,17 @@
             appendMessage(params.lastMessage, false);
         }
 
-        // Back to Chat List Buttn 
-         const backButton = document.getElementById('backToChatList'); 
+        // Back to Chat List Button - MODIFIED LOGIC
+        const backButton = document.getElementById('backToChatList');
 
-        if (backButton) { 
-            backButton.addEventListener('click', () => { 
-            if (window.history.length > 1) { 
-                window.history.back();
-            } else {
-                window.location.href = '/chat'; 
-            }
-        });
-    } else {
-        console.error("Error: Back button not found! Check the HTML.");
-    }
+        if (backButton) {
+            backButton.addEventListener('click', () => {
+                // Always navigate to the /chat route, which main-page.html handles to load chat-list.html
+                window.location.href = '/chat';
+            });
+        } else {
+            console.error("Error: Back button not found! Check the HTML.");
+        }
 
         // Call and video call buttons (stub)
         document.getElementById('callBtn').onclick = function () {
@@ -145,6 +165,47 @@
         document.getElementById('videoCallBtn').onclick = function () {
             alert('Video call feature coming soon!');
         };
+
+        // --- Search Functionality ---
+        const searchMessageInput = document.getElementById('searchMessageInput');
+        const searchButton = document.getElementById('searchButton');
+        const messages = chatMessages.getElementsByTagName('div'); // Get all message divs
+
+        function performSearch() {
+            const searchTerm = searchMessageInput.value.toLowerCase();
+
+            for (let i = 0; i < messages.length; i++) {
+                const message = messages[i];
+                const messageText = message.textContent.toLowerCase();
+
+                // Remove previous highlights
+                message.innerHTML = message.textContent;
+
+                if (searchTerm === "") {
+                    // If search term is empty, show all messages
+                    message.style.display = '';
+                } else if (messageText.includes(searchTerm)) {
+                    // Show message and highlight
+                    message.style.display = '';
+                    const regex = new RegExp(searchTerm, 'gi');
+                    message.innerHTML = messageText.replace(regex, (match) => `<span class="highlight">${match}</span>`);
+                } else {
+                    // Hide message if it doesn't match
+                    message.style.display = 'none';
+                }
+            }
+            chatMessages.scrollTop = 0; // Scroll to top to see highlighted messages
+        }
+
+        searchButton.addEventListener('click', performSearch);
+        searchMessageInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                performSearch();
+            } else if (searchMessageInput.value === '') {
+                // Clear search if input is empty without pressing Enter
+                performSearch();
+            }
+        });
     </script>
 </body>
 
