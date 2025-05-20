@@ -6,14 +6,82 @@
     <title>Login</title>
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="/img/razom-logo.png" type="image/png">
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-image: linear-gradient(to top right, #ffffff, #3B82F6); /* Added background gradient */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh; /* Ensure it takes full viewport height */
+            overflow: hidden; /* Hide scrollbars if orbs go out */
+            position: relative;
         }
+
+        /* Glassmorphism for the login card */
+        .login-card {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background-image: linear-gradient(to bottom right, rgba(255, 255, 255, 0.2), rgba(226, 232, 240, 0.2));
+            z-index: 10; /* Ensure it's above orbs */
+        }
+
+        /* Adjust input fields inside glassmorphic elements */
+        .login-card input[type="text"],
+        .login-card input[type="password"] {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #333;
+        }
+
+        .login-card input::placeholder {
+            color: rgba(51, 51, 51, 0.7);
+        }
+
+        /* Floating Orbs Styles (copied from main-page.html) */
+        @keyframes floatOrbs {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+            50% { transform: translate(20px, -20px) scale(1.1); opacity: 0.9; }
+            100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+
+        .floating-orb {
+            position: absolute;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(100, 150, 255, 0.2) 100%);
+            border-radius: 50%;
+            filter: blur(35px);
+            animation: floatOrbs 15s ease-in-out infinite alternate, pulse 10s ease-in-out infinite alternate;
+            z-index: 1; /* Below the login card */
+            pointer-events: none;
+        }
+
+        .orb-1 { width: 80px; height: 80px; top: 10%; left: 5%; }
+        .orb-2 { width: 120px; height: 120px; bottom: 15%; right: 10%; animation-delay: 2s; }
+        .orb-3 { width: 60px; height: 60px; top: 30%; right: 20%; animation-delay: 4s; }
+        .orb-4 { width: 100px; height: 100px; bottom: 5%; left: 30%; animation-delay: 6s; }
+        .orb-5 { width: 90px; height: 90px; top: 50%; left: 45%; animation-delay: 8s; }
     </style>
 </head>
 <body class="bg-gray-100 h-screen flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
+
+    <div class="floating-orb orb-1"></div>
+    <div class="floating-orb orb-2"></div>
+    <div class="floating-orb orb-3"></div>
+    <div class="floating-orb orb-4"></div>
+    <div class="floating-orb orb-5"></div>
+
+    <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-md login-card">
         <h2 class="text-2xl font-semibold text-gray-800 mb-6">Login</h2>
         <form id="login-form" class="space-y-4">
             <div>
@@ -75,7 +143,18 @@
                     if (response.ok) {
                         console.log('Login successful:', data);
                         localStorage.setItem('access_token', data.access_token); // Store the token
-                        window.location.href = '/main-page.html';
+
+                        // --- RE-INTRODUCED: Store user data in localStorage ---
+                        const userData = {
+                            name: data.user.name || 'New User',
+                            email: data.user.email || emailInput.value,
+                            bio: data.user.bio || 'No bio yet.',
+                            profilePicture: data.user.profilePicture || '/img/razom-logo.png'
+                        };
+                        localStorage.setItem('user_data', JSON.stringify(userData));
+                        // --- END RE-INTRODUCED ---
+
+                        window.location.href = '/main-page.html#profile'; // Redirect to main page, specifically the profile section
                     } else {
                         console.error('Login error:', data);
                         alert(data.detail || 'Login failed');

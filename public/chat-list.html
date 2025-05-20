@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat List</title>
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <link rel="icon" href="/img/razom-logo.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         /* Custom Styles for Animation */
@@ -58,7 +59,7 @@
     <div id="chat-list-container" class="chat-list-container bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
         <div class="flex items-center justify-between mb-4">
             <div>
-                <h1 class="text-xl font-semibold text-gray-800">Hello, Harrold</h1>
+                <h1 class="text-xl font-semibold text-gray-800" id="chat-list-greeting">Hello, User</h1>
             </div>
             <div class="flex items-center space-x-2">
                 <button class="text-gray-600 hover:text-gray-800">
@@ -241,6 +242,11 @@
             setTimeout(() => {
                 chatListContainer.classList.add('active');
             }, 100); // Small delay to ensure the element is rendered
+
+            // Get user data from localStorage and update the greeting
+            const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+            const userName = userData.name || 'User'; // Default to 'User' if name not found
+            document.getElementById('chat-list-greeting').textContent = `Hello, ${userName}`;
         });
 
         // Modal JavaScript
@@ -316,7 +322,6 @@
             contactsTableBody.appendChild(newRow);
 
             newContactNameInput.value = '';
-            newContactEmailInput.value = '';
             newContactEmailInput.value = '';
         });
     </script>

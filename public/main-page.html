@@ -7,60 +7,315 @@
     <title>Secure Chat App</title>
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="icon" href="/img/razom-illustration.png" type="image/png">
+    <link rel="icon" href="/img/razom-logo.png" type="image/png">
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-image: linear-gradient(to top right, #ffffff, #3B82F6);
+            position: relative;
+            overflow: hidden;
         }
 
-        /* Glassmorphism with Gradient */
+        /* Glassmorphism with Gradient for main content area */
         #content {
             background: rgba(255, 255, 255, 0.2);
-            /* Adjust opacity for glass effect */
             border-radius: 16px;
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.3);
-
-            /* Gradient Background (Example - Customize these colors) */
-            background-image: linear-gradient(to bottom right, #f0f2f1, #e2e8f0);
+            background-image: linear-gradient(to bottom right, rgba(255, 255, 255, 0.2), rgba(226, 232, 240, 0.2));
+            /* Removed max-height here as it can cause content cutoff */
         }
 
         /* You might need to adjust these if other elements are affected */
         .container {
             position: relative;
-            /* Needed for absolute positioning of the FAB */ 
         }
 
         .tab {
             background: none;
-             border: none;
+            border: none;
             cursor: pointer;
-            color: #4a5568; /* Default text color */
+            color: #4a5568;
             font-weight: 600;
             padding: 0.5rem 1rem;
-            margin-bottom: -2px; /* Adjust as needed to overlap border */
-            border-bottom: 2px solid transparent; /* Default border */
-            border-radius: 0.375rem 0.375rem 0 0; /* Rounded top corners */
-        }  
+            margin-bottom: -2px;
+            border-bottom: 2px solid transparent;
+            border-radius: 0.375rem 0.375rem 0 0;
+        }
 
         .tab.active {
-            color: #2c68f8; /* Active text color */
-            border-bottom-color: #2c68f8; /* Active border color */
+            color: #2c68f8;
+            border-bottom-color: #2c68f8;
         }
 
         .tab:hover {
-            border-bottom-color: #a0aec0; /* Hover border color */
+            border-bottom-color: #a0aec0;
+        }
+
+        /* Styles for the new post button */
+        #new-post-button {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Style for the character counter */
+        #char-count {
+            font-size: 0.875rem;
+            color: #6b7280;
+            text-align: right;
+            margin-top: 0.25rem;
+        }
+
+        /* NEW STYLES FOR GLASSMORPHISM ON OTHER DIVS */
+
+        #new-post-form,
+        .modal-content {
+            /* CORRECTED: Applied to .modal-content, not #edit-post-modal directly */
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1.5rem;
+        }
+
+
+        /* Style for individual timeline posts */
+        .timeline-post {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        /* Adjust input fields inside glassmorphic elements if they become hard to read */
+        #new-post-form textarea,
+        #new-post-form select,
+        #new-post-form input[type="file"],
+        .modal-content textarea,
+        /* CORRECTED: Applied to .modal-content textarea */
+        .modal-content select,
+        /* CORRECTED: Applied to .modal-content select */
+        .modal-content input[type="file"] {
+            /* CORRECTED: Applied to .modal-content input */
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #333;
+        }
+
+        #new-post-form textarea::placeholder,
+        .modal-content textarea::placeholder {
+            /* CORRECTED: Applied to .modal-content textarea */
+            color: rgba(51, 51, 51, 0.7);
+        }
+
+        /* Essential for scrolling and spacing with fixed header */
+        main {
+            min-height: 0;
+            overflow-y: auto;
+            padding-top: 100px;
+            /* --- SCROLLBAR HIDING STYLES FOR MAIN ELEMENT --- */
+            &::-webkit-scrollbar {
+                width: 0;
+                height: 0;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background-color: transparent;
+            }
+
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        /* RE-INTRODUCE YOUR FLOATING ORBS STYLES HERE */
+        @keyframes floatOrbs {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.7;
+            }
+
+            50% {
+                transform: translate(20px, -20px) scale(1.1);
+                opacity: 0.9;
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.9);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0.9);
+                opacity: 0.8;
+            }
+        }
+
+        .floating-orb {
+            position: absolute;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(100, 150, 255, 0.2) 100%);
+            border-radius: 50%;
+            filter: blur(35px);
+            animation: floatOrbs 15s ease-in-out infinite alternate, pulse 10s ease-in-out infinite alternate;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .orb-1 {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 5%;
+        }
+
+        .orb-2 {
+            width: 120px;
+            height: 120px;
+            bottom: 15%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .orb-3 {
+            width: 60px;
+            height: 60px;
+            top: 30%;
+            right: 20%;
+            animation-delay: 4s;
+        }
+
+        .orb-4 {
+            width: 100px;
+            height: 100px;
+            bottom: 5%;
+            left: 30%;
+            animation-delay: 6s;
+        }
+
+        .orb-5 {
+            width: 90px;
+            height: 90px;
+            top: 50%;
+            left: 45%;
+            animation-delay: 8s;
+        }
+
+        /* NEW NAVBAR TOGGLE CSS */
+        #main-navbar {
+            padding-left: 1rem;
+            padding-right: 1rem;
+            transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out, padding 0.3s ease-in-out;
+            width: auto;
+            max-width: fit-content;
+            justify-content: flex-start;
+        }
+
+        #main-navbar.expanded {
+            width: auto;
+            max-width: 100%;
+            justify-content: space-between;
+            /* Razom left, links right */
+        }
+
+        #nav-links {
+            /* These styles define the collapsed state for transition */
+            opacity: 0;
+            transform: translateX(20px);
+            pointer-events: none;
+            /* Prevent interaction when hidden */
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            /* Adjusted transition timing */
+            /* Do NOT set display:none here if you want transitions to start from visible state */
+            /* We will control display with JavaScript */
+        }
+
+        /* Class added by JavaScript when links are shown */
+        #nav-links.is-visible {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+            /* Allow interaction when visible */
+            display: flex;
+            /* Crucial: Override display:none when active */
+        }
+
+        /* Style for the Razom button itself */
+        #razom-toggle-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.25rem;
+            /* Equivalent to text-xl */
+            font-weight: 600;
+            /* Equivalent to font-semibold */
+            cursor: pointer;
+            padding: 0;
+            /* Remove default button padding */
+        }
+
+        /* Modal specific styles */
+        .modal {
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: none;
+            /* THIS IS THE CRUCIAL CHANGE: Ensure it's hidden by default */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            /* The actual content area of the modal */
+            /* Background and border are now applied here */
+            background: rgba(255, 255, 255, 0.9);
+            /* This specific background is for the modal content itself */
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 90%;
+            max-width: 500px;
         }
     </style>
 </head>
+
 <body class="bg-gray-100 h-screen flex flex-col">
+
+    <div class="floating-orb orb-1"></div>
+    <div class="floating-orb orb-2"></div>
+    <div class="floating-orb orb-3"></div>
+    <div class="floating-orb orb-4"></div>
+    <div class="floating-orb orb-5"></div>
+
     <header class="bg-blue-500 shadow-md rounded-b-lg">
-        <nav
+        <nav id="main-navbar"
             class="fixed top-4 left-4 right-4 z-10 bg-zinc-800 bg-opacity-90 backdrop-blur-sm rounded-full px-4 md:px-6 py-3 flex items-center justify-between">
-            <a href="public\main-page.html" class="text-white text-xl font-semibold">Razom</a>
-            <div class="flex space-x-2 md:space-x-4 items-center">
+            <button id="razom-toggle-button">Razom</button>
+            <div id="nav-links" class="flex space-x-2 md:space-x-4 items-center">
                 <a href="#chat" class="text-gray-300 hover:text-white transition-colors duration-300">Chat</a>
                 <a href="#profile" class="text-gray-300 hover:text-white transition-colors duration-300">Account</a>
                 <button id="logout-button"
@@ -69,22 +324,123 @@
         </nav>
     </header>
 
-    <main class="container mx-auto mt-16 px-4 py-6 flex-grow flex items-center justify-center">
-        <div id="content" class="w-full max-w-md bg-white rounded-lg shadow-lg p-6 md:p-8">
+    <main class="container mx-auto px-4 py-6 flex-grow">
+        <div id="content" class="w-full max-w-md bg-white rounded-lg shadow-lg p-6 md:p-8 mx-auto">
         </div>
     </main>
 
-    <footer class="bg-gray-200 text-gray-600 text-center py-4 rounded-t-lg shadow-md">
-        <p>&copy; 2024 Secure Chat. All rights reserved.</p>
-    </footer>
+    <div id="edit-post-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Edit Post</h3>
+            <textarea id="edit-post-text" class="w-full p-2 border border-gray-300 rounded mb-2 resize-y"
+                minlength="10" maxlength="500"></textarea>
+            <div id="edit-char-count" class="text-sm text-gray-500 mb-2">0 / 500</div>
+            <div class="flex items-center space-x-4 mb-4">
+                <label for="edit-post-image" class="cursor-pointer text-blue-600 hover:text-blue-800">
+                    <input type="file" id="edit-post-image" accept="image/*" class="hidden">
+                    Change Photo/Image
+                </label>
+                <div class="relative">
+                    <select id="edit-post-feeling"
+                        class="appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="">Feeling/Emotion</option>
+                        <option value="happy">Happy 😊</option>
+                        <option value="sad">Sad 😔</option>
+                        <option value="excited">Excited 🥳</option>
+                        <option value="angry">Angry 😡</option>
+                        <option value="loved">Loved ❤️</option>
+                    </select>
+                    <div
+                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <button id="save-edited-post"
+                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Save Changes
+            </button>
+            <button id="cancel-edit-post"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2">
+                Cancel
+            </button>
+        </div>
+    </div>
+
 
     <script>
-        // Basic routing (for demonstration purposes). 
+        // Basic routing (for demonstration purposes).
         const contentDiv = document.getElementById('content');
         const logoutButton = document.getElementById('logout-button');
 
+        const razomToggleButton = document.getElementById('razom-toggle-button');
+        const navLinks = document.getElementById('nav-links');
+        const mainNavbar = document.getElementById('main-navbar');
+
+        // Initial state: hide navLinks and set navbar to collapsed width
+        navLinks.style.display = 'none'; // Initially hide it
+        mainNavbar.classList.remove('expanded'); // Ensure it starts collapsed
+
+        function toggleNavbar() {
+            // Check if navLinks is currently hidden
+            const isHidden = navLinks.style.display === 'none';
+
+            if (isHidden) {
+                // Show the navbar items
+                navLinks.style.display = 'flex'; // Make it visible instantly for animation
+                // Use a small timeout to allow display change to register before starting transition
+                setTimeout(() => {
+                    navLinks.classList.add('is-visible');
+                    mainNavbar.classList.add('expanded');
+                }, 10); // Small delay
+            } else {
+                // Hide the navbar items
+                navLinks.classList.remove('is-visible');
+                mainNavbar.classList.remove('expanded');
+                // Wait for the transition to complete before setting display: none
+                navLinks.addEventListener('transitionend', function handler() {
+                    navLinks.style.display = 'none';
+                    navLinks.removeEventListener('transitionend', handler); // Remove listener to prevent multiple calls
+                }, {
+                    once: true
+                }); // Ensure the event listener is removed after one execution
+            }
+        }
+
+        if (razomToggleButton) {
+            razomToggleButton.addEventListener('click', toggleNavbar);
+        }
+
+        // Function to update posts and photos count in the profile header
+        function updateProfileCounts() {
+            // We'll update this function to fetch counts from the backend if you implement that later
+            // For now, local storage is still used for *local* counts display if backend fetch isn't ready
+            const storedPosts = JSON.parse(localStorage.getItem('user_posts') || '[]');
+            const storedPhotos = JSON.parse(localStorage.getItem('user_photos') || '[]');
+
+            const postsCountElement = document.getElementById('posts-count'); // Use ID for direct access
+            const photosCountElement = document.getElementById('photos-count'); // Use ID for direct access
+
+            if (postsCountElement) {
+                postsCountElement.textContent = storedPosts.length;
+            }
+            if (photosCountElement) {
+                photosCountElement.textContent = storedPhotos.length;
+            }
+        }
+
+
         function loadContent(page) {
             let html = '';
+            // Retrieve userData here, at the top of loadContent, so it's always available
+            const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+            const userName = userData.name || 'Guest User';
+            const userBio = userData.bio || 'No bio yet.';
+            const userProfilePicture = userData.profilePicture || '/img/razom-logo.png';
+
+
             switch (page) {
                 case 'profile':
                     const countryCodes = [
@@ -149,15 +505,15 @@
                     <div class="profile-container">
                         <div class="profile-header flex flex-col items-center">
                             <div class="profile-picture">
-                                <img src="/img/razom-illustration.png" alt="Profile Picture"
-                                    class="rounded-full h-20 w-20 border-2 border-gray-300">
+                                <img src="${userProfilePicture}" alt="Profile Picture"
+                                    class="rounded-full h-20 w-20 border-2 border-gray-300" id="profile-pic-display">
                             </div>
                             <div class="profile-info text-center">
-                                <h2 class="text-xl font-semibold text-gray-800 mb-2">Harrold Al-Mussa</h2>
+                                <h2 class="text-xl font-semibold text-gray-800 mb-2" id="profile-name-display">${userName}</h2>
                                 <div class="profile-stats flex space-x-4 justify-center">
-                                    <div><span class="font-bold">84</span> Posts</div>  <div><span class="font-bold">5</span> Connections</div>
-                                    <div><span class="font-bold">12</span> Photos</div>   </div>
-                                <div class="profile-details mt-2">                   <p class="text-gray-700">Bio:</p>
+                                    <div><span class="font-bold" id="posts-count">0</span> Posts</div>  <div><span class="font-bold">5</span> Connections</div>
+                                    <div><span class="font-bold" id="photos-count">0</span> Photos</div>   </div>
+                                <div class="profile-details mt-2">                   <p class="text-gray-700">Bio: <span id="profile-bio-display">${userBio}</span></p>
                                 </div>
                             </div>
                         </div>
@@ -173,12 +529,12 @@
                             <h3 class="text-lg font-semibold text-gray-800 mb-4">Edit Profile</h3>
                             <div class="mb-4">
                                 <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Name:</label>
-                                <input type="text" id="name" placeholder="Your Name"
+                                <input type="text" id="name" placeholder="Your Name" value="${userName}"
                                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                             </div>
                             <div class="mb-4">
                                 <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
-                                <input type="email" id="email" placeholder="Your Email"
+                                <input type="email" id="email" placeholder="Your Email" value="${userData.email || ''}"
                                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                             </div>
                             <div class="mb-4">
@@ -206,7 +562,7 @@
                                 <label for="bio" class="block text-gray-700 text-sm font-bold mb-2">Bio (Max 150
                                     characters):</label>
                                 <textarea id="bio" maxlength="150" placeholder="Your Bio"
-                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">${userBio}</textarea>
                             </div>
                             <div class="mb-4">
                                 <label for="pronouns" class="block text-gray-700 text-sm font-bold mb-2">Pronouns:</label>
@@ -219,53 +575,17 @@
                                     <option>Prefer not to say</option>
                                 </select>
                             </div>
-                            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-4">
+                            <button id="update-profile-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-4">
                                 Update Profile</button>
                         </div>
 
                         <div class="timeline-container mt-8">
-                            <div class="flex justify-start border-b border-gray-300">
-                                <button class="tab active">Posts</button>  <button class="tab">Photos</button>
+                            <div class="flex justify-center border-b border-gray-300">
+                                <button class="tab active">Posts</button>
+                                <button class="tab">Photos</button>
                                 <button class="tab">Highlights</button>
                             </div>
-                            <div class="timeline-posts mt-4">
-                                <div class="timeline-post bg-white shadow-md rounded-xl p-4 mb-4">
-                                    <div class="post-header flex items-center justify-between mb-2">
-                                        <div class="user-info flex items-center">
-                                            <img src="/img/razom-illustration.png" alt="User Avatar"
-                                                class="rounded-full h-8 w-8 mr-2">
-                                            <span class="font-semibold">Harrold Al-Mussa</span>
-                                        </div>
-                                        <button class="edit-post-button text-gray-500 hover:text-gray-700">Edit</button>
-                                    </div>
-                                    <div class="post-content">
-                                        <p class="text-gray-700 mb-2">This is the first timeline post with more rounded
-                                            corners!</p>
-                                        <img src="/img/razom-illustration.png" alt="Post Image"
-                                            class="rounded-lg mb-2 max-w-full">
-                                    </div>
-                                    <div class="post-footer text-gray-500 text-sm">
-                                        Posted on: May 19, 2024
-                                    </div>
-                                </div>
-                                <div class="timeline-post bg-white shadow-md rounded-xl p-4 mb-4">
-                                    <div class="post-header flex items-center justify-between mb-2">
-                                        <div class="user-info flex items-center">
-                                            <img src="/img/razom-illustration.png" alt="User Avatar"
-                                                class="rounded-full h-8 w-8 mr-2">
-                                            <span class="font-semibold">Harrold Al-Mussa</span>
-                                        </div>
-                                        <button class="edit-post-button text-gray-500 hover:text-gray-700">Edit</button>
-                                    </div>
-                                    <div class="post-content">
-                                        <p class="text-gray-700 mb-2">Another interesting update with even more style!</p>
-                                        <video src="placeholder-video.mp4" controls class="rounded-lg mb-2 max-w-full">
-                                        </video>
-                                    </div>
-                                    <div class="post-footer text-gray-500 text-sm">
-                                        Posted on: May 18, 2024
-                                    </div>
-                                </div>
+                            <div id="timeline-content" class="timeline-posts mt-4">
                             </div>
                         </div>
                     </div>
@@ -276,7 +596,6 @@
                         .then(response => response.text())
                         .then(data => {
                             contentDiv.innerHTML = data;
-                            // Initialize chat list animation if needed
                             const chatListContainer = document.getElementById('chat-list-container');
                             if (chatListContainer) {
                                 setTimeout(() => {
@@ -298,145 +617,690 @@
             }
             contentDiv.innerHTML = html;
 
-            // Add event listeners for the new elements
             if (page === 'profile') {
+                updateProfileCounts(); // Update counts when profile page loads
+
+                // Event listener for the "Edit Profile" button
+                const toggleEditProfileButton = document.getElementById('toggle-edit-profile');
+                const editProfileForm = document.getElementById('edit-profile-form');
+                if (toggleEditProfileButton && editProfileForm) {
+                    toggleEditProfileButton.addEventListener('click', () => {
+                        editProfileForm.classList.toggle('hidden');
+                    });
+                }
+
+
+                // Event listener for "Share Profile" button
+                const shareProfileButton = document.getElementById('share-profile');
+                if (shareProfileButton) {
+                    shareProfileButton.addEventListener('click', () => {
+                        alert('Share Profile button clicked!');
+                    });
+                }
+
+                // Phone number confirmation (Twilio)
                 const confirmPhoneButton = document.getElementById('confirm-phone');
                 const phoneConfirmationMessage = document.getElementById('phone-confirmation-message');
                 const phoneInput = document.getElementById('phone');
                 const countryCodeInput = document.getElementById('country-code');
-                const toggleEditProfileButton = document.getElementById('toggle-edit-profile');
-                const editProfileForm = document.getElementById('edit-profile-form');
-                const tabButtons = document.querySelectorAll('.tab');
-                const timelinePosts = document.querySelector('.timeline-posts'); // Assuming this is the container for posts
 
-                toggleEditProfileButton.addEventListener('click', () => {
-                    editProfileForm.classList.toggle('hidden');
-                });
-
-                document.getElementById('share-profile').addEventListener('click', () => {
-                    document.getElementById('share-options').classList.toggle('hidden');
-                });
-
-                document.getElementById('share-url').addEventListener('click', () => {
-                    alert('Sharing profile URL');
-                });
-
-                document.getElementById('share-qr').addEventListener('click', () => {
-                    alert('Sharing QR Code');
-                });
-
-                document.getElementById('share-key').addEventListener('click', () => {
-                    alert('Sharing Razom Key');
-                });
-
-                confirmPhoneButton.addEventListener('click', () => {
+                // Declare verifyCode function in a scope where it's accessible
+                function verifyCode() {
+                    const code = document.getElementById('verification-code').value;
                     const phoneNumber = phoneInput.value;
                     const countryCode = countryCodeInput.value;
 
-                    confirmPhoneButton.disabled = true;
-                    confirmPhoneButton.textContent = 'Sending...';
-                    phoneConfirmationMessage.textContent = 'Sending verification code...';
-
-                    fetch('/verify/send-code', {
+                    fetch('/verify/check-code', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Authorization': 'Bearer ' + localStorage.getItem('access_token')
                         },
-                        body: JSON.stringify({ phoneNumber: phoneNumber, countryCode: countryCode })
+                        body: JSON.stringify({ phoneNumber: phoneNumber, countryCode: countryCode, code: code })
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            phoneConfirmationMessage.textContent = 'Verification code sent to ' + countryCode + ' ' + phoneNumber + '! Please enter the code below.';
-                            const codeInputField = document.createElement('input');
-                            codeInputField.type = 'text';
-                            codeInputField.id = 'verification-code';
-                            codeInputField.placeholder = 'Verification Code';
-                            codeInputField.classList.add('shadow', 'appearance-none', 'border', 'rounded', 'w-full', 'py-2', 'px-3', 'text-gray-700', 'leading-tight', 'focus:outline-none', 'focus:shadow-outline', 'mt-2');
-                            confirmPhoneButton.parentNode.insertBefore(codeInputField, confirmPhoneButton.nextSibling);
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                phoneConfirmationMessage.textContent = 'Phone number verified successfully!';
+                                phoneInput.disabled = true;
+                                countryCodeInput.disabled = true;
+                                confirmPhoneButton.disabled = true;
+                                const codeInputField = document.getElementById('verification-code');
+                                if(codeInputField) codeInputField.style.display = 'none';
+                            } else {
+                                phoneConfirmationMessage.textContent = 'Invalid verification code. Please try again.';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            phoneConfirmationMessage.textContent = 'An error occurred. Please try again.';
+                        });
+                }
 
-                            confirmPhoneButton.textContent = 'Verify Code';
-                            confirmPhoneButton.disabled = false;
-                            confirmPhoneButton.removeEventListener('click', arguments.callee);
-                            confirmPhoneButton.addEventListener('click', verifyCode);
+
+                if (confirmPhoneButton) {
+                    confirmPhoneButton.addEventListener('click', () => {
+                        const phoneNumber = phoneInput.value;
+                        const countryCode = countryCodeInput.value;
+
+                        confirmPhoneButton.disabled = true;
+                        confirmPhoneButton.textContent = 'Sending...';
+                        phoneConfirmationMessage.textContent = 'Sending verification code...';
+
+                        fetch('/verify/send-code', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                            },
+                            body: JSON.stringify({ phoneNumber: phoneNumber, countryCode: countryCode })
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    phoneConfirmationMessage.textContent = 'Verification code sent to ' + countryCode + ' ' + phoneNumber + '! Please enter the code below.';
+                                    const codeInputField = document.createElement('input');
+                                    codeInputField.type = 'text';
+                                    codeInputField.id = 'verification-code';
+                                    codeInputField.placeholder = 'Verification Code';
+                                    codeInputField.classList.add('shadow', 'appearance-none', 'border', 'rounded', 'w-full', 'py-2', 'px-3', 'text-gray-700', 'leading-tight', 'focus:outline-none', 'focus:shadow-outline', 'mt-2');
+                                    confirmPhoneButton.parentNode.insertBefore(codeInputField, confirmPhoneButton.nextSibling);
+
+                                    confirmPhoneButton.textContent = 'Verify Code';
+                                    confirmPhoneButton.disabled = false;
+                                    confirmPhoneButton.removeEventListener('click', arguments.callee);
+                                    confirmPhoneButton.addEventListener('click', verifyCode);
+                                } else {
+                                    phoneConfirmationMessage.textContent = 'Failed to send verification code. ' + (data.error || 'Please try again.');
+                                    confirmPhoneButton.disabled = false;
+                                    confirmPhoneButton.textContent = 'Confirm';
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                phoneConfirmationMessage.textContent = 'An error occurred. Please try again.';
+                                confirmPhoneButton.disabled = false;
+                                confirmPhoneButton.textContent = 'Confirm';
+                            });
+                    });
+                }
+
+
+                // Get references to the dynamic elements for profile update
+                const profileNameDisplay = document.getElementById('profile-name-display');
+                const profileBioDisplay = document.getElementById('profile-bio-display');
+                const profilePicDisplay = document.getElementById('profile-pic-display');
+                const editNameInput = document.getElementById('name');
+                const editEmailInput = document.getElementById('email');
+                const editBioTextarea = document.getElementById('bio');
+                const editProfilePictureInput = document.getElementById('profile-picture');
+                const updateProfileButton = document.getElementById('update-profile-button');
+                const pronounsSelect = document.getElementById('pronouns');
+
+
+                // Populate edit fields with current data from userData
+                if (editNameInput) editNameInput.value = userName; // Use userName from outer scope
+                if (editEmailInput) editEmailInput.value = userData.email || '';
+                if (editBioTextarea) editBioTextarea.value = userBio; // Use userBio from outer scope
+                // You'd need to add logic here to set the selected option for pronouns if stored in userData
+                // For example: if (userData.pronouns) pronounsSelect.value = userData.pronouns;
+
+                // Add event listener for Update Profile button
+                if (updateProfileButton) {
+                    updateProfileButton.addEventListener('click', async () => {
+                        const current_userData_for_update = JSON.parse(localStorage.getItem('user_data') || '{}'); // Re-retrieve for freshest data
+
+                        const newName = editNameInput.value.trim();
+                        const newEmail = editEmailInput.value.trim();
+                        const newBio = editBioTextarea.value.trim();
+                        const newProfilePictureFile = editProfilePictureInput.files[0];
+                        const newPronouns = pronounsSelect.value;
+
+                        if (!newName || !newEmail) {
+                            alert('Name and Email are required.');
+                            return;
+                        }
+
+                        let updatedProfilePicture = current_userData_for_update.profilePicture;
+
+                        if (newProfilePictureFile) {
+                            updatedProfilePicture = await new Promise((resolve) => {
+                                const reader = new FileReader();
+                                reader.onload = function (e) {
+                                    resolve(e.target.result);
+                                };
+                                reader.readAsDataURL(newProfilePictureFile);
+                            });
+                        }
+
+                        const dataToSend = {
+                            name: newName,
+                            email: newEmail,
+                            bio: newBio,
+                            profilePicture: updatedProfilePicture,
+                            pronouns: newPronouns
+                        };
+
+                        try {
+                            const response = await fetch('/users/profile', {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                                },
+                                body: JSON.stringify(dataToSend)
+                            });
+
+                            const result = await response.json();
+
+                            if (response.ok) {
+                                console.log('Backend update successful:', result);
+                                localStorage.setItem('user_data', JSON.stringify(result.user));
+
+                                if (profileNameDisplay) profileNameDisplay.textContent = result.user.name;
+                                if (profileBioDisplay) profileBioDisplay.textContent = result.user.bio;
+                                if (profilePicDisplay) profilePicDisplay.src = result.user.profilePicture;
+
+                                editProfileForm.classList.add('hidden');
+                                alert('Profile updated successfully!');
+                            } else {
+                                console.error('Backend update failed:', result);
+                                alert('Failed to update profile: ' + (result.error || 'Unknown error'));
+                            }
+                        } catch (error) {
+                            console.error('Error during profile update:', error);
+                            alert('An error occurred during profile update.');
+                        }
+                    });
+                }
+
+
+                const tabButtons = document.querySelectorAll('.tab');
+                const timelineContent = document.getElementById('timeline-content');
+
+                // Function to render a single post HTML
+                function renderPostHtml(post) {
+                    const postAuthorName = JSON.parse(localStorage.getItem('user_data') || '{}').name || 'Anonymous';
+                    const postAuthorAvatar = JSON.parse(localStorage.getItem('user_data') || '{}').profilePicture || '/img/razom-logo.png';
+
+                    // Ensure post.id is correctly used for data-post-id
+                    return `
+                        <div class="timeline-post bg-white shadow-md rounded-xl p-4 mb-4" data-post-id="${post.id}">
+                            <div class="post-header flex items-center justify-between mb-2">
+                                <div class="user-info flex items-center">
+                                    <img src="${postAuthorAvatar}" alt="User Avatar"
+                                        class="rounded-full h-8 w-8 mr-2">
+                                    <span class="font-semibold">${postAuthorName}</span>
+                                </div>
+                                <div class="post-actions flex space-x-2">
+                                    <button class="edit-post-button text-blue-500 hover:text-blue-700 text-sm">Edit</button>
+                                    <button class="delete-post-button text-red-500 hover:text-red-700 text-sm">Delete</button>
+                                </div>
+                            </div>
+                            <div class="post-content">
+                                <p class="text-gray-700 mb-2">${post.content}</p>
+                                ${post.image ? `<img src="${post.image}" alt="Post Image" class="rounded-lg mb-2 max-w-full">` : ''}
+                                ${post.feeling && post.feeling !== '' ? `<p class="text-sm text-gray-600">Feeling: ${post.feeling}</p>` : ''}
+                            </div>
+                            <div class="post-footer text-gray-500 text-sm">
+                                Posted on: ${new Date(post.timestamp).toLocaleDateString()}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Helper function to render posts content
+                async function renderPostsContent() { // Made async to await fetch
+                    if (!timelineContent) return;
+
+                    timelineContent.innerHTML = `
+                        <button id="new-post-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mb-4">
+                            New Post
+                        </button>
+                        <div id="new-post-form" class="hidden bg-gray-50 p-4 rounded-lg shadow-inner mb-4">
+                            <textarea id="post-text" class="w-full p-2 border border-gray-300 rounded mb-2 resize-y"
+                                placeholder="What's on your mind? (10-500 characters)" minlength="10" maxlength="500"></textarea>
+                            <div id="char-count" class="text-sm text-gray-500 mb-2">0 / 500</div>
+                            <div class="flex items-center space-x-4 mb-4">
+                                <label for="post-image" class="cursor-pointer text-blue-600 hover:text-blue-800">
+                                    <input type="file" id="post-image" accept="image/*" class="hidden">
+                                    Add Photo/Image
+                                </label>
+                                <button class="text-blue-600 hover:text-blue-800" onclick="alert('Polls feature coming soon!')">Add Poll</button>
+                                <div class="relative">
+                                    <select id="post-feeling" class="appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:shadow-outline">
+                                        <option value="">Feeling/Emotion</option>
+                                        <option value="happy">Happy 😊</option>
+                                        <option value="sad">Sad 😔</option>
+                                        <option value="excited">Excited 🥳</option>
+                                        <option value="angry">Angry 😡</option>
+                                        <option value="loved">Loved ❤️</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="submit-post" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                                Post
+                            </button>
+                            <button id="cancel-post" class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2">
+                                Cancel
+                            </button>
+                        </div>
+                        <div id="posts-list" class="timeline-posts">
+                        </div>
+                    `;
+
+                    const newPostButton = document.getElementById('new-post-button');
+                    const newPostForm = document.getElementById('new-post-form');
+                    const postTextArea = document.getElementById('post-text');
+                    const charCount = document.getElementById('char-count');
+                    const submitPostButton = document.getElementById('submit-post');
+                    const cancelPostButton = document.getElementById('cancel-post');
+                    const postsListDiv = document.getElementById('posts-list');
+                    const postFeelingSelect = document.getElementById('post-feeling');
+
+                    if (newPostButton) {
+                        newPostButton.addEventListener('click', () => {
+                            newPostForm.classList.remove('hidden');
+                            newPostButton.classList.add('hidden');
+                        });
+                    }
+
+                    if (cancelPostButton) {
+                        cancelPostButton.addEventListener('click', () => {
+                            newPostForm.classList.add('hidden');
+                            newPostButton.classList.remove('hidden');
+                            postTextArea.value = '';
+                            postFeelingSelect.value = '';
+                            charCount.textContent = '0 / 500';
+                            document.getElementById('post-image').value = '';
+                        });
+                    }
+
+                    if (postTextArea) {
+                        postTextArea.addEventListener('input', () => {
+                            const currentLength = postTextArea.value.length;
+                            charCount.textContent = `${currentLength} / 500`;
+                        });
+                    }
+
+                    // --- Post Creation Logic (Sends to Backend) ---
+                    if (submitPostButton) {
+                        submitPostButton.addEventListener('click', async () => { // Make async
+                            const postContent = postTextArea.value.trim();
+                            const postFeeling = postFeelingSelect.value;
+                            const postImageInput = document.getElementById('post-image');
+                            const postImageFile = postImageInput.files[0];
+
+                            if (postContent.length >= 10 && postContent.length <= 500) {
+                                let imageUrl = '';
+                                if (postImageFile) {
+                                    imageUrl = await new Promise((resolve) => {
+                                        const reader = new FileReader();
+                                        reader.onload = function (e) { resolve(e.target.result); };
+                                        reader.readAsDataURL(postImageFile);
+                                    });
+                                }
+
+                                try {
+                                    const response = await fetch('/posts', { // New POST endpoint
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                                        },
+                                        body: JSON.stringify({
+                                            content: postContent,
+                                            image: imageUrl,
+                                            feeling: postFeeling
+                                        })
+                                    });
+
+                                    const result = await response.json();
+
+                                    if (response.ok) {
+                                        console.log('Post created successfully:', result.post);
+                                        // The backend now returns the full post object including ID and timestamp
+                                        const newPost = result.post;
+                                        // Update localStorage with the new post (optional, but good for immediate display without re-fetching all)
+                                        let posts = JSON.parse(localStorage.getItem('user_posts') || '[]');
+                                        posts.unshift(newPost);
+                                        localStorage.setItem('user_posts', JSON.stringify(posts));
+
+                                        const newPostElement = document.createElement('div');
+                                        newPostElement.innerHTML = renderPostHtml(newPost);
+                                        if (postsListDiv) postsListDiv.prepend(newPostElement.firstElementChild);
+
+                                        const createdPostElement = newPostElement.firstElementChild;
+                                        if (createdPostElement) {
+                                            const editBtn = createdPostElement.querySelector('.edit-post-button');
+                                            const deleteBtn = createdPostElement.querySelector('.delete-post-button');
+                                            if (editBtn) editBtn.addEventListener('click', () => editPost(createdPostElement.dataset.postId));
+                                            if (deleteBtn) deleteBtn.addEventListener('click', () => deletePost(createdPostElement.dataset.postId));
+                                        }
+
+                                        newPostForm.classList.add('hidden');
+                                        newPostButton.classList.remove('hidden');
+                                        postTextArea.value = '';
+                                        postFeelingSelect.value = '';
+                                        charCount.textContent = '0 / 500';
+                                        postImageInput.value = '';
+                                        updateProfileCounts(); // Update posts count
+                                    } else {
+                                        console.error('Failed to create post:', result);
+                                        alert('Failed to create post: ' + (result.error || 'Unknown error'));
+                                    }
+                                } catch (error) {
+                                    console.error('Error creating post:', error);
+                                    alert('An error occurred while creating the post.');
+                                }
+
+                            } else {
+                                alert('Post must be between 10 and 500 characters.');
+                            }
+                        });
+                    }
+
+                    // Function to edit a post (Sends to Backend)
+                    async function editPost(postId) { // Make async
+                        const posts = JSON.parse(localStorage.getItem('user_posts') || '[]'); // Still use localStorage for current view's posts
+                        const postToEdit = posts.find(post => post.id == postId);
+
+                        if (postToEdit) {
+                            const editModal = document.getElementById('edit-post-modal');
+                            const editPostTextarea = document.getElementById('edit-post-text');
+                            const editCharCount = document.getElementById('edit-char-count');
+                            const editPostFeelingSelect = document.getElementById('edit-post-feeling');
+                            const editPostImageInput = document.getElementById('edit-post-image');
+                            const saveEditedPostButton = document.getElementById('save-edited-post');
+                            const cancelEditPostButton = document.getElementById('cancel-edit-post');
+
+                            if (!editModal || !editPostTextarea || !editCharCount || !editPostFeelingSelect || !saveEditedPostButton || !cancelEditPostButton) {
+                                console.error("Edit modal elements not found!");
+                                return;
+                            }
+
+                            editPostTextarea.value = postToEdit.content;
+                            editCharCount.textContent = `${postToEdit.content.length} / 500`;
+                            editPostFeelingSelect.value = postToEdit.feeling || '';
+
+                            editModal.classList.remove('hidden');
+                            editModal.classList.add('flex');
+
+                            editPostTextarea.oninput = () => {
+                                editCharCount.textContent = `${editPostTextarea.value.length} / 500`;
+                            };
+
+                            saveEditedPostButton.onclick = null;
+                            cancelEditPostButton.onclick = null;
+
+                            saveEditedPostButton.onclick = async () => { // Make async
+                                const updatedContent = editPostTextarea.value.trim();
+                                const updatedFeeling = editPostFeelingSelect.value;
+                                const updatedImageFile = editPostImageInput.files[0];
+
+                                if (updatedContent.length >= 10 && updatedContent.length <= 500) {
+                                    let updatedImageUrl = postToEdit.image; // Start with existing image
+
+                                    if (updatedImageFile) {
+                                        updatedImageUrl = await new Promise((resolve) => {
+                                            const reader = new FileReader();
+                                            reader.onload = function (e) { resolve(e.target.result); };
+                                            reader.readAsDataURL(updatedImageFile);
+                                        });
+                                    }
+
+                                    try {
+                                        const response = await fetch(`/posts/${postId}`, { // New PUT endpoint
+                                            method: 'PUT',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                                            },
+                                            body: JSON.stringify({
+                                                content: updatedContent,
+                                                image: updatedImageUrl,
+                                                feeling: updatedFeeling
+                                            })
+                                        });
+
+                                        const result = await response.json();
+
+                                        if (response.ok) {
+                                            console.log('Post updated successfully:', result.post);
+                                            // Update the post in local storage with the backend's response
+                                            const updatedPosts = posts.map(p => p.id == postId ? result.post : p);
+                                            localStorage.setItem('user_posts', JSON.stringify(updatedPosts));
+
+                                            editModal.classList.add('hidden');
+                                            editModal.classList.remove('flex');
+                                            renderPostsContent(); // Re-render to show updated post
+                                        } else {
+                                            console.error('Failed to update post:', result);
+                                            alert('Failed to update post: ' + (result.error || 'Unknown error'));
+                                        }
+                                    } catch (error) {
+                                        console.error('Error updating post:', error);
+                                        alert('An error occurred while updating the post.');
+                                    }
+
+                                } else {
+                                    alert('Post must be between 10 and 500 characters.');
+                                }
+                            };
+
+                            cancelEditPostButton.onclick = () => {
+                                editModal.classList.add('hidden');
+                                editModal.classList.remove('flex');
+                            };
+                        }
+                    }
+
+                    // Function to delete a post (Sends to Backend)
+                    async function deletePost(postId) { // Make async
+                        if (confirm('Are you sure you want to delete this post?')) {
+                            try {
+                                const response = await fetch(`/posts/${postId}`, { // New DELETE endpoint
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                                    }
+                                });
+
+                                const result = await response.json();
+
+                                if (response.ok) {
+                                    console.log('Post deleted successfully:', result.postId);
+                                    // Remove from localStorage
+                                    let posts = JSON.parse(localStorage.getItem('user_posts') || '[]');
+                                    posts = posts.filter(post => post.id != postId);
+                                    localStorage.setItem('user_posts', JSON.stringify(posts));
+
+                                    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+                                    if (postElement) postElement.remove();
+                                    updateProfileCounts();
+                                    if (postsListDiv && posts.length === 0) {
+                                        postsListDiv.innerHTML = '<p class="text-gray-500 text-center mt-4">No posts yet. Be the first to share something!</p>';
+                                    }
+                                } else {
+                                    console.error('Failed to delete post:', result);
+                                    alert('Failed to delete post: ' + (result.error || 'Unknown error'));
+                                }
+                            } catch (error) {
+                                console.error('Error deleting post:', error);
+                                alert('An error occurred while deleting the post.');
+                            }
+                        }
+                    }
+
+                    // --- Fetch posts from backend on load ---
+                    try {
+                        const response = await fetch('/posts/my', { // New GET endpoint
+                            method: 'GET',
+                            headers: {
+                                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                            }
+                        });
+                        const result = await response.json();
+
+                        if (response.ok) {
+                            const fetchedPosts = result.posts;
+                            // Store fetched posts in localStorage for immediate future use (optional, but good practice)
+                            localStorage.setItem('user_posts', JSON.stringify(fetchedPosts));
+
+                            if (postsListDiv) {
+                                if (fetchedPosts.length > 0) {
+                                    postsListDiv.innerHTML = fetchedPosts.map(post => renderPostHtml(post)).join('');
+                                    document.querySelectorAll('.edit-post-button').forEach(button => {
+                                        button.addEventListener('click', (e) => editPost(e.target.closest('.timeline-post').dataset.postId));
+                                    });
+                                    document.querySelectorAll('.delete-post-button').forEach(button => {
+                                        button.addEventListener('click', (e) => deletePost(e.target.closest('.timeline-post').dataset.postId));
+                                    });
+                                } else {
+                                    postsListDiv.innerHTML = '<p class="text-gray-500 text-center mt-4">No posts yet. Be the first to share something!</p>';
+                                }
+                            }
+                            updateProfileCounts(); // Update counts based on fetched posts
                         } else {
-                            phoneConfirmationMessage.textContent = 'Failed to send verification code. ' + (data.error || 'Please try again.');
-                            confirmPhoneButton.disabled = false;
-                            confirmPhoneButton.textContent = 'Confirm';
+                            console.error('Failed to fetch posts:', result);
+                            if (postsListDiv) postsListDiv.innerHTML = '<p class="text-red-500 text-center mt-4">Failed to load posts. Please try again.</p>';
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        phoneConfirmationMessage.textContent = 'An error occurred. Please try again.';
-                        confirmPhoneButton.disabled = false;
-                        confirmPhoneButton.textContent = 'Confirm';
-                    });
-                });
+                    } catch (error) {
+                        console.error('Error fetching posts:', error);
+                        if (postsListDiv) postsListDiv.innerHTML = '<p class="text-red-500 text-center mt-4">An error occurred while fetching posts.</p>';
+                    }
+                }
 
-                // Tab functionality
-                tabButtons.forEach(tab => {
-                    tab.addEventListener('click', () => {
-                        tabButtons.forEach(btn => btn.classList.remove('active'));
-                        tab.classList.add('active');
+                // Helper function to render photos content (no changes needed here for now)
+                function renderPhotosContent() {
+                    if (!timelineContent) return;
 
-                        // ** Update content based on the tab clicked  **
-                        //  For now, let's just change the content of timeline-posts
-                        if (tab.textContent === 'Posts') {
-                            timelinePosts.innerHTML = `
-                                <div class="timeline-post bg-white shadow-md rounded-xl p-4 mb-4">
-                                    <div class="post-header flex items-center justify-between mb-2">
-                                        <div class="user-info flex items-center">
-                                            <img src="/img/razom-illustration.png" alt="User Avatar"
-                                                class="rounded-full h-8 w-8 mr-2">
-                                            <span class="font-semibold">Harrold Al-Mussa</span>
-                                        </div>
-                                        <button class="edit-post-button text-gray-500 hover:text-gray-700">Edit</button>
-                                    </div>
-                                    <div class="post-content">
-                                        <p class="text-gray-700 mb-2">This is the first timeline post with more rounded
-                                            corners!</p>
-                                        <img src="/img/razom-illustration.png" alt="Post Image"
-                                            class="rounded-lg mb-2 max-w-full">
-                                    </div>
-                                    <div class="post-footer text-gray-500 text-sm">
-                                        Posted on: May 19, 2024
-                                    </div>
-                                </div>
-                                <div class="timeline-post bg-white shadow-md rounded-xl p-4 mb-4">
-                                    <div class="post-header flex items-center justify-between mb-2">
-                                        <div class="user-info flex items-center">
-                                            <img src="/img/razom-illustration.png" alt="User Avatar"
-                                                class="rounded-full h-8 w-8 mr-2">
-                                            <span class="font-semibold">Harrold Al-Mussa</span>
-                                        </div>
-                                        <button class="edit-post-button text-gray-500 hover:text-gray-700">Edit</button>
-                                    </div>
-                                    <div class="post-content">
-                                        <p class="text-gray-700 mb-2">Another interesting update with even more style!</p>
-                                        <video src="placeholder-video.mp4" controls class="rounded-lg mb-2 max-w-full">
-                                        </video>
-                                    </div>
-                                    <div class="post-footer text-gray-500 text-sm">
-                                        Posted on: May 18, 2024
-                                    </div>
-                                </div>
-                            `;
-                        } else if (tab.textContent === 'Photos') {
-                            timelinePosts.innerHTML = '<p>Display photos here.</p>';
-                        } else if (tab.textContent === 'Highlights') {
-                            timelinePosts.innerHTML = '<p>Show highlights here.</p>';
+                    timelineContent.innerHTML = `
+                        <div class="mb-4">
+                            <label for="upload-photo" class="block text-gray-700 text-sm font-bold mb-2">Upload New Photo:</label>
+                            <input type="file" id="upload-photo" accept="image/*" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            <button id="submit-photo" class="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Upload Photo</button>
+                            <p id="photo-upload-message" class="text-sm text-gray-500 mt-2"></p>
+                        </div>
+                        <div id="photos-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        </div>
+                    `;
+
+                    const uploadPhotoInput = document.getElementById('upload-photo');
+                    const submitPhotoButton = document.getElementById('submit-photo');
+                    const photoUploadMessage = document.getElementById('photo-upload-message');
+                    const photosGrid = document.getElementById('photos-grid');
+
+                    function displayPhotos() {
+                        const storedPhotos = JSON.parse(localStorage.getItem('user_photos') || '[]');
+                        if (photosGrid) {
+                            photosGrid.innerHTML = '';
+                            if (storedPhotos.length > 0) {
+                                storedPhotos.forEach(photo => {
+                                    const imgContainer = document.createElement('div');
+                                    imgContainer.classList.add('relative', 'group');
+                                    imgContainer.innerHTML = `
+                                        <img src="${photo.src}" alt="User Photo" class="w-full h-auto object-cover aspect-square rounded-sm">
+                                        <button data-photo-id="${photo.id}" class="delete-photo-button absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                            &times;
+                                        </button>
+                                    `;
+                                    photosGrid.appendChild(imgContainer);
+                                });
+
+                                document.querySelectorAll('.delete-photo-button').forEach(button => {
+                                    button.addEventListener('click', (e) => {
+                                        const photoId = e.target.dataset.photoId;
+                                        deletePhoto(photoId);
+                                    });
+                                });
+                            } else {
+                                photosGrid.innerHTML = '<p class="text-gray-500 text-center col-span-full mt-4">No photos yet. Upload your first photo!</p>';
+                            }
                         }
+                        updateProfileCounts();
+                    }
+
+                    function deletePhoto(photoId) {
+                        if (confirm('Are you sure you want to delete this photo?')) {
+                            let photos = JSON.parse(localStorage.getItem('user_photos') || '[]');
+                            photos = photos.filter(photo => photo.id != photoId);
+                            localStorage.setItem('user_photos', JSON.stringify(photos));
+                            displayPhotos();
+                        }
+                    }
+
+                    if (submitPhotoButton) {
+                        submitPhotoButton.addEventListener('click', () => {
+                            const file = uploadPhotoInput.files[0];
+                            if (file) {
+                                if (file.type.startsWith('image/')) {
+                                    const reader = new FileReader();
+                                    reader.onload = function (e) {
+                                        const newPhoto = {
+                                            id: Date.now(),
+                                            src: e.target.result
+                                        };
+                                        let photos = JSON.parse(localStorage.getItem('user_photos') || '[]');
+                                        photos.unshift(newPhoto);
+                                        localStorage.setItem('user_photos', JSON.stringify(photos));
+                                        if (photoUploadMessage) photoUploadMessage.textContent = 'Photo uploaded successfully!';
+                                        if (uploadPhotoInput) uploadPhotoInput.value = '';
+                                        displayPhotos();
+                                    };
+                                    reader.readAsDataURL(file);
+                                } else {
+                                    if (photoUploadMessage) photoUploadMessage.textContent = 'Please select an image file.';
+                                }
+                            } else {
+                                if (photoUploadMessage) photoUploadMessage.textContent = 'No file selected.';
+                            }
+                        });
+                    }
+
+                    displayPhotos();
+                }
+
+
+                if (tabButtons && timelineContent) {
+                    tabButtons.forEach(tab => {
+                        tab.addEventListener('click', () => {
+                            tabButtons.forEach(btn => btn.classList.remove('active'));
+                            tab.classList.add('active');
+
+                            if (tab.textContent === 'Posts') {
+                                renderPostsContent();
+                            } else if (tab.textContent === 'Photos') {
+                                renderPhotosContent();
+                            } else if (tab.textContent === 'Highlights') {
+                                timelineContent.innerHTML = `
+                                    <div class="p-4 bg-white shadow-md rounded-xl">
+                                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Your Highlights</h3>
+                                        <p class="text-gray-700">Here you can compile and display your most cherished photos and memories. Think of it like Instagram's highlights!</p>
+                                        <div class="mt-4 text-center text-gray-500">
+                                            <p>No highlights yet. Start adding your favorite moments!</p>
+                                            <button class="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Create New Highlight</button>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        });
                     });
-                });
+                }
+
+
+                renderPostsContent();
             }
         }
 
-        // Handle navigation clicks
         document.querySelectorAll('nav a').forEach(link => {
             link.addEventListener('click', (event) => {
-                event.preventDefault();
                 const href = event.target.getAttribute('href').substring(1);
+
+                event.preventDefault();
                 if (href === 'loginpage.html') {
                     window.location.href = href;
                 } else if (href === 'chat') {
@@ -444,10 +1308,12 @@
                 } else {
                     loadContent(href);
                 }
+                if (navLinks.classList.contains('is-visible')) {
+                    toggleNavbar();
+                }
             });
         });
 
-        // Handle logout button click
         if (logoutButton) {
             logoutButton.addEventListener('click', async () => {
                 try {
@@ -458,6 +1324,9 @@
                     if (response.ok) {
                         console.log('Logout successful');
                         localStorage.removeItem('access_token');
+                        localStorage.removeItem('user_posts');
+                        localStorage.removeItem('user_photos');
+                        localStorage.removeItem('user_data');
                         window.location.href = '/login';
                     } else {
                         console.error('Logout failed');
@@ -477,35 +1346,13 @@
             window.location.href = '/login';
         }
 
-        loadContent('');
-
-        function verifyCode() {
-            const phoneNumber = phoneInput.value;
-            const countryCode = countryCodeInput.value;
-            const code = document.getElementById('verification-code').value;
-
-            fetch('/verify/check-code', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-                },
-                body: JSON.stringify({ phoneNumber: phoneNumber, countryCode: countryCode, code: code })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    phoneConfirmationMessage.textContent = 'Phone number verified successfully!';
-                    phoneInput.disabled = true;
-                    confirmPhoneButton.disabled = true;
-                } else {
-                    phoneConfirmationMessage.textContent = 'Invalid verification code. Please try again.';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                phoneConfirmationMessage.textContent = 'An error occurred during verification.';
-            });
+        const currentHash = window.location.hash.substring(1);
+        if (currentHash === 'profile') {
+            loadContent('profile');
+        } else if (currentHash === 'chat') {
+            loadContent('chat');
+        } else {
+            loadContent('');
         }
     </script>
 </body>

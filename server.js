@@ -29,8 +29,7 @@ const pool = new Pool({
 });
 
 const usersTable = 'users'; // Or, if necessary, '"Users"'
-
-// Remove simpleHash function
+const postsTable = 'posts'; // New table name for posts
 
 function generateVerificationCode(length) {
     return crypto.randomInt(0, Math.pow(10, length)).toString().padStart(length, '0');
@@ -102,14 +101,26 @@ app.post('/users/login', [
         const client = await pool.connect();
         try {
             const result = await client.query(
-                `SELECT * FROM ${usersTable} WHERE email = $1`,
+                `SELECT id, email, first_name, bio, profile_picture_url, password FROM ${usersTable} WHERE email = $1`,
                 [email]
             );
             const user = result.rows[0];
 
             if (user && await bcrypt.compare(password, user.password)) {
                 const token = jwt.sign({ userId: user.id, email: user.email }, secretKey, { expiresIn: '1h' });
-                res.status(200).json({ message: 'Login success', access_token: token });
+
+                const userDataForFrontend = {
+                    name: user.first_name,
+                    email: user.email,
+                    bio: user.bio || 'No bio yet.',
+                    profilePicture: user.profile_picture_url || '/img/razom-logo.png'
+                };
+
+                res.status(200).json({
+                    message: 'Login success',
+                    access_token: token,
+                    user: userDataForFrontend
+                });
             } else {
                 res.status(401).json({ detail: 'Invalid credentials' });
             }
@@ -142,6 +153,160 @@ app.post('/users/logout', (req, res) => {
     res.status(200).json({ message: 'Logout success' });
 });
 
+// Update User Profile
+app.put('/users/profile', authenticateToken, async (req, res) => {
+    const { name, email, bio, profilePicture } = req.body;
+
+    if (!name || !email) {
+        return res.status(400).json({ error: 'Name and Email are required' });
+    }
+
+    try {
+        const client = await pool.connect();
+        try {
+            const query = `
+                UPDATE ${usersTable}
+                SET first_name = $1, email = $2, bio = $3, profile_picture_url = $4
+                WHERE id = $5
+                RETURNING id, email, first_name, bio, profile_picture_url;
+            `;
+            const values = [
+                name,
+                email,
+                bio || null,
+                profilePicture || '/img/razom-logo.png',
+                req.user.userId
+            ];
+
+            const result = await client.query(query, values);
+
+            if (result.rows.length > 0) {
+                const updatedUser = result.rows[0];
+                const userDataForFrontend = {
+                    name: updatedUser.first_name,
+                    email: updatedUser.email,
+                    bio: updatedUser.bio || 'No bio yet.',
+                    profilePicture: updatedUser.profile_picture_url || '/img/razom-logo.png'
+                };
+                res.json({ success: true, message: 'Profile updated successfully', user: userDataForFrontend });
+            } else {
+                res.status(404).json({ error: 'User not found' });
+            }
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('Profile Update Error:', error);
+        if (error.code === '23505') {
+             return res.status(409).json({ error: 'Email already in use.' });
+        }
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
+});
+
+
+// NEW: Post Management Endpoints
+
+// Create a new post
+app.post('/posts', authenticateToken, async (req, res) => {
+    const { content, image, feeling } = req.body; // image can be base64 string for now
+
+    if (!content || content.length < 10 || content.length > 500) {
+        return res.status(400).json({ error: 'Post content must be between 10 and 500 characters.' });
+    }
+
+    try {
+        const client = await pool.connect();
+        try {
+            const result = await client.query(
+                `INSERT INTO ${postsTable} (user_id, content, image_url, feeling) VALUES ($1, $2, $3, $4) RETURNING *`,
+                [req.user.userId, content, image, feeling]
+            );
+            res.status(201).json({ success: true, message: 'Post created successfully', post: result.rows[0] });
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('Create Post Error:', error);
+        res.status(500).json({ error: 'Failed to create post' });
+    }
+});
+
+// Get all posts for the authenticated user
+app.get('/posts/my', authenticateToken, async (req, res) => {
+    try {
+        const client = await pool.connect();
+        try {
+            const result = await client.query(
+                `SELECT id, content, image_url as image, feeling, timestamp FROM ${postsTable} WHERE user_id = $1 ORDER BY timestamp DESC`,
+                [req.user.userId]
+            );
+            res.json({ success: true, posts: result.rows });
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('Get Posts Error:', error);
+        res.status(500).json({ error: 'Failed to retrieve posts' });
+    }
+});
+
+// Update a specific post
+app.put('/posts/:id', authenticateToken, async (req, res) => {
+    const postId = req.params.id;
+    const { content, image, feeling } = req.body;
+
+    if (!content || content.length < 10 || content.length > 500) {
+        return res.status(400).json({ error: 'Post content must be between 10 and 500 characters.' });
+    }
+
+    try {
+        const client = await pool.connect();
+        try {
+            const result = await client.query(
+                `UPDATE ${postsTable} SET content = $1, image_url = $2, feeling = $3 WHERE id = $4 AND user_id = $5 RETURNING *`,
+                [content, image, feeling, postId, req.user.userId]
+            );
+            if (result.rows.length > 0) {
+                res.json({ success: true, message: 'Post updated successfully', post: result.rows[0] });
+            } else {
+                res.status(404).json({ error: 'Post not found or unauthorized' });
+            }
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('Update Post Error:', error);
+        res.status(500).json({ error: 'Failed to update post' });
+    }
+});
+
+// Delete a specific post
+app.delete('/posts/:id', authenticateToken, async (req, res) => {
+    const postId = req.params.id;
+
+    try {
+        const client = await pool.connect();
+        try {
+            const result = await client.query(
+                `DELETE FROM ${postsTable} WHERE id = $1 AND user_id = $2 RETURNING id`,
+                [postId, req.user.userId]
+            );
+            if (result.rows.length > 0) {
+                res.json({ success: true, message: 'Post deleted successfully', postId: result.rows[0].id });
+            } else {
+                res.status(404).json({ error: 'Post not found or unauthorized' });
+            }
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('Delete Post Error:', error);
+        res.status(500).json({ error: 'Failed to delete post' });
+    }
+});
+
+
 // Twilio Verify - Send Code
 app.post('/verify/send-code', authenticateToken, async (req, res) => {
     const { phoneNumber, countryCode } = req.body;
@@ -152,31 +317,29 @@ app.post('/verify/send-code', authenticateToken, async (req, res) => {
 
     const to = countryCode + phoneNumber;
 
-    const client = await pool.connect(); // Get a client from the pool
+    const client = await pool.connect();
     try {
-        await client.query('BEGIN'); // Start a transaction
+        await client.query('BEGIN');
 
-        // Update the user's phone number in the database
         await client.query(
             `UPDATE ${usersTable} SET phone_number = $1, country_code = $2 WHERE email = $3`,
             [phoneNumber, countryCode, req.user.email]
         );
 
-        // Send the Twilio verification code
         const verification = await twilioClient.verify.v2.services(verifyServiceId)
             .verifications
             .create({ to: to, channel: 'sms' });
 
-        await client.query('COMMIT'); // Commit the transaction
+        await client.query('COMMIT');
 
         console.log(`Verification started: ${verification.sid}`);
         res.json({ success: true, message: 'Code sent', verificationSid: verification.sid });
     } catch (error) {
-        await client.query('ROLLBACK'); // Rollback the transaction on error
+        await client.query('ROLLBACK');
         console.error('Twilio/DB Error:', error);
         res.status(500).json({ error: 'Failed to send code' });
     } finally {
-        client.release(); // Release the client back to the pool
+        client.release();
     }
 });
 
