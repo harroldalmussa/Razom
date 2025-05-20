@@ -1712,7 +1712,6 @@
                         currentEditedDataURL = imagePreviewCanvas.toDataURL('image/png');
                     }
 
-                    // --- Slider and Note Event Listeners (ensure these are correctly wired up after re-render) ---
                     if (brightnessSlider) {
                         brightnessSlider.addEventListener('input', () => {
                             brightnessValueSpan.textContent = `${brightnessSlider.value}%`;
@@ -1946,7 +1945,7 @@
         if (logoutButton) {
             logoutButton.addEventListener('click', async () => {
                 try {
-                    const response = await fetch('http://localhost:3000/users/logout', { // ADDED FULL URL
+                    const response = await fetch('http://localhost:3000/users/logout', { 
                         method: 'POST',
                     });
 
@@ -1957,7 +1956,7 @@
                         localStorage.removeItem('user_photos');
                         localStorage.removeItem('user_data');
                         localStorage.removeItem('user_contacts');
-                        window.location.href = 'http://localhost:3000/login'; // Redirect to login page served by backend
+                        window.location.href = 'http://localhost:3000/login'; 
                     } else {
                         console.error('Logout failed');
                         alert('Logout failed');
@@ -1969,16 +1968,13 @@
             });
         }
 
-        // Initial check for login status and redirection
         if (localStorage.getItem('access_token')) {
             console.log('User is logged in (token found).');
-            // If logged in, load content based on hash or default to home
             const currentHash = window.location.hash.substring(1);
             if (currentHash === 'profile') {
                 loadContent('profile');
             } else if (currentHash === 'chat') {
-                // For chat, we need to specifically fetch chat-list.html
-                fetch('http://localhost:3000/chat-list.html') // Ensure the chat-list.html is also served correctly
+                fetch('http://localhost:3000/chat-list.html') 
                     .then(response => response.text())
                     .then(data => {
                         contentDiv.innerHTML = data;
@@ -1998,7 +1994,7 @@
             }
         } else {
             console.log('User is not logged in (token not found).');
-            window.location.href = 'http://localhost:3000/login'; // Redirect to backend-served login page
+            window.location.href = 'http://localhost:3000/login'; 
         }
     </script>
 </body>
