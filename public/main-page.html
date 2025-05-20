@@ -826,7 +826,7 @@
                     const phoneNumber = phoneInput.value;
                     const countryCode = countryCodeInput.value;
 
-                    fetch('/verify/check-code', {
+                    fetch('http://localhost:3000/verify/check-code', { // ADDED FULL URL
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -862,7 +862,7 @@
                         confirmPhoneButton.textContent = 'Sending...';
                         phoneConfirmationMessage.textContent = 'Sending verification code...';
 
-                        fetch('/verify/send-code', {
+                        fetch('http://localhost:3000/verify/send-code', { // ADDED FULL URL
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -956,7 +956,7 @@
                         };
 
                         try {
-                            const response = await fetch('/users/profile', {
+                            const response = await fetch('http://localhost:3000/users/profile', { // ADDED FULL URL
                                 method: 'PUT',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -1103,7 +1103,7 @@
                             }
 
                             try {
-                                const response = await fetch('/posts', {
+                                const response = await fetch('http://localhost:3000/posts', { // ADDED FULL URL
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -1222,7 +1222,7 @@
                                 }
 
                                 try {
-                                    const response = await fetch(`/posts/${postId}`, {
+                                    const response = await fetch(`http://localhost:3000/posts/${postId}`, { // ADDED FULL URL
                                         method: 'PUT',
                                         headers: {
                                             'Content-Type': 'application/json',
@@ -1274,7 +1274,7 @@
                     async function deletePost(postId) {
                         if (confirm('Are you sure you want to delete this post?')) {
                             try {
-                                const response = await fetch(`/posts/${postId}`, {
+                                const response = await fetch(`http://localhost:3000/posts/${postId}`, { // ADDED FULL URL
                                     method: 'DELETE',
                                     headers: {
                                         'Authorization': 'Bearer ' + localStorage.getItem('access_token')
@@ -1315,7 +1315,7 @@
                     }
 
                     try {
-                        const response = await fetch('/posts/my', {
+                        const response = await fetch('http://localhost:3000/posts/my', { // ADDED FULL URL
                             method: 'GET',
                             headers: {
                                 'Authorization': 'Bearer ' + localStorage.getItem('access_token')
@@ -1448,7 +1448,7 @@
                         photosGrid.innerHTML = '<p class="text-gray-500 text-center col-span-full mt-4">Loading moments...</p>';
 
                         try {
-                            const response = await fetch('/moments/my', {
+                            const response = await fetch('http://localhost:3000/moments/my', { // ADDED FULL URL
                                 method: 'GET',
                                 headers: {
                                     'Authorization': 'Bearer ' + localStorage.getItem('access_token')
@@ -1523,7 +1523,7 @@
                     async function deleteMoment(momentId) { // Renamed from deletePhoto
                         if (confirm('Are you sure you want to delete this moment?')) {
                             try {
-                                const response = await fetch(`/moments/${momentId}`, {
+                                const response = await fetch(`http://localhost:3000/moments/${momentId}`, { // ADDED FULL URL
                                     method: 'DELETE',
                                     headers: {
                                         'Authorization': 'Bearer ' + localStorage.getItem('access_token')
@@ -1627,7 +1627,7 @@
                             // For images, if the editor was opened, currentEditedDataURL is already the canvas output (PNG).
                             // If it's a video, currentEditedDataURL is the original video data URL.
                             try {
-                                const response = await fetch('/moments', {
+                                const response = await fetch('http://localhost:3000/moments', { // ADDED FULL URL
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -1747,7 +1747,7 @@
                         applyImageEditsButton.addEventListener('click', async () => { // Made async
                             if (currentEditedDataURL && currentFileType === 'image/png') {
                                 try {
-                                    const response = await fetch('/moments', {
+                                    const response = await fetch('http://localhost:3000/moments', { // ADDED FULL URL
                                         method: 'POST',
                                         headers: {
                                             'Content-Type': 'application/json',
@@ -1927,8 +1927,13 @@
 
                 event.preventDefault();
                 if (href === 'loginpage.html') {
-                    window.location.href = href;
-                } else {
+                    // This is handled by Express's static file serving or /login route
+                    window.location.href = 'http://localhost:3000/login'; // Redirect to login page served by backend
+                } else if (href === 'register') {
+                    // This is handled by Express's static file serving or /register route
+                     window.location.href = 'http://localhost:3000/register'; // Redirect to register page served by backend
+                }
+                 else {
                     loadContent(href);
                 }
                 if (navLinks.classList.contains('is-visible')) {
@@ -1937,10 +1942,11 @@
             });
         });
 
+
         if (logoutButton) {
             logoutButton.addEventListener('click', async () => {
                 try {
-                    const response = await fetch('/users/logout', {
+                    const response = await fetch('http://localhost:3000/users/logout', { // ADDED FULL URL
                         method: 'POST',
                     });
 
@@ -1951,7 +1957,7 @@
                         localStorage.removeItem('user_photos');
                         localStorage.removeItem('user_data');
                         localStorage.removeItem('user_contacts');
-                        window.location.href = '/login';
+                        window.location.href = 'http://localhost:3000/login'; // Redirect to login page served by backend
                     } else {
                         console.error('Logout failed');
                         alert('Logout failed');
@@ -1963,20 +1969,36 @@
             });
         }
 
+        // Initial check for login status and redirection
         if (localStorage.getItem('access_token')) {
             console.log('User is logged in (token found).');
+            // If logged in, load content based on hash or default to home
+            const currentHash = window.location.hash.substring(1);
+            if (currentHash === 'profile') {
+                loadContent('profile');
+            } else if (currentHash === 'chat') {
+                // For chat, we need to specifically fetch chat-list.html
+                fetch('http://localhost:3000/chat-list.html') // Ensure the chat-list.html is also served correctly
+                    .then(response => response.text())
+                    .then(data => {
+                        contentDiv.innerHTML = data;
+                        const scripts = contentDiv.querySelectorAll('script');
+                        scripts.forEach(script => {
+                            const newScript = document.createElement('script');
+                            newScript.textContent = script.textContent;
+                            document.head.appendChild(newScript).remove();
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading chat-list.html:', error);
+                        contentDiv.innerHTML = '<p>Failed to load chat interface.</p>';
+                    });
+            } else {
+                loadContent('home');
+            }
         } else {
             console.log('User is not logged in (token not found).');
-            window.location.href = '/login';
-        }
-
-        const currentHash = window.location.hash.substring(1);
-        if (currentHash === 'profile') {
-            loadContent('profile');
-        } else if (currentHash === 'chat') {
-            loadContent('chat');
-        } else {
-            loadContent('home');
+            window.location.href = 'http://localhost:3000/login'; // Redirect to backend-served login page
         }
     </script>
 </body>
